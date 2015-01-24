@@ -143,3 +143,49 @@ impl Parser {
         self.pos >= self.input.len()
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use error::CTResult;
+    use token::Token;
+    use token::TokenKind::*;
+
+    fn check_raw_result(raw_result: CTResult<Vec<Token>>, expected: Vec<Token>) {
+        if let Ok(result) = raw_result {
+            assert_eq!(result, expected);
+        } else {
+            panic!(raw_result);
+        }
+    }
+
+    #[test]
+    fn elems() {
+        let mut parser = Parser::new("CHeH");
+        let raw_result = parser.parse_molecule();
+        let expected = vec!(Token { tok: Elem("C".to_string()), pos: 0, len: 1 },
+                            Token { tok: Elem("He".to_string()), pos: 1, len: 2 },
+                            Token { tok: Elem("H".to_string()), pos: 3, len: 1 });
+        check_raw_result(raw_result, expected);
+    }
+
+    #[test]
+    fn coefs() {
+        let mut parser = Parser::new("C23");
+        let raw_result = parser.parse_molecule();
+        let expected = vec!(Token { tok: Elem("C".to_string()), pos: 0, len: 1 },
+                            Token { tok: Coefficient(23), pos: 1, len: 2 });
+        check_raw_result(raw_result, expected);
+    }
+
+    #[test]
+    fn parens() {
+        let mut parser = Parser::new("(C)2");
+        let raw_result = parser.parse_molecule();
+        let expected = vec!(Token { tok: ParenOpen, pos: 0, len: 1 },
+                            Token { tok: Elem("C".to_string()), pos: 1, len: 1},
+                            Token { tok: ParenClose, pos: 2, len: 1},
+                            Token { tok: Coefficient(2), pos: 3, len: 1 });
+        check_raw_result(raw_result, expected);
+    }
+}

@@ -1,3 +1,5 @@
+#![allow(unstable)]
+
 use parser::Parser;
 
 mod token;

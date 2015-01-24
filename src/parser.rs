@@ -14,10 +14,12 @@
 //! S --> M + S
 //!    |  M
 //! M --> PM
-//!    |  P(M)
 //!    |  P
 //! P --> EC
 //!    |  E
+//! E --> <text>
+//!    |  (M)
+//! C --> <number>
 
 use std::str::CharRange;
 use token::Token;
@@ -39,26 +41,10 @@ impl Parser {
         let mut per = try!(self.parse_periodic());
         out.extend(per.drain());
 
-        if !self.eof() {
-            if self.peek_char() == '(' {
-                out.push(Token { tok: ParenOpen, pos: self.pos, len: 1 });
-                self.consume_char();
-                let mut molecule = try!(self.parse_molecule());
-                out.extend(molecule.drain());
-
-                if self.eof() || self.consume_char() != ')' {
-                    return Err(CTError {
-                        desc: "Missing closing parentheses".to_string(),
-                        pos: self.pos - 1,
-                        len: 1,
-                    });
-                } else {
-                    out.push(Token { tok: ParenClose, pos: self.pos - 1, len: 1 });
-                }
-            } else if self.peek_char().is_alphabetic() {
-                let mut molecule = try!(self.parse_molecule());
-                out.extend(molecule.drain());
-            }
+        // TODO: Make this cleaner
+        if !self.eof() && (self.peek_char().is_alphabetic() || self.peek_char() == '(') {
+            let mut molecule = try!(self.parse_molecule());
+            out.extend(molecule.drain());
         }
 
         Ok(out)
@@ -66,8 +52,8 @@ impl Parser {
 
     fn parse_periodic(&mut self) -> CTResult<Vec<Token>> {
         let mut out = Vec::new();
-        let elem = try!(self.parse_element());
-        out.push(elem);
+        let mut elem = try!(self.parse_element());
+        out.extend(elem.drain());
 
         if !self.eof() && self.peek_char().is_numeric() {
             let coef = try!(self.parse_coefficient());
@@ -77,7 +63,7 @@ impl Parser {
         Ok(out)
     }
 
-    fn parse_element(&mut self) -> CTResult<Token> {
+    fn parse_element(&mut self) -> CTResult<Vec<Token>> {
         if self.eof() {
             return Err(CTError {
                 desc: "Found no periodic element".to_string(),
@@ -85,14 +71,30 @@ impl Parser {
                 len: 1,
             });
         }
+        let start_pos = self.pos;
         let first = self.consume_char();
-        if first.is_uppercase() {
+        if first == '(' {
+            let mut out = Vec::new();
+            out.push(Token { tok: ParenOpen, pos: start_pos, len: 1 });
+            let mut molecule = try!(self.parse_molecule());
+            out.extend(molecule.drain());
+
+            if self.eof() || self.consume_char() != ')' {
+                Err(CTError {
+                    desc: "Missing closing parentheses".to_string(),
+                    pos: self.pos - 1,
+                    len: 1,
+                })
+            } else {
+                out.push(Token { tok: ParenClose, pos: self.pos - 1, len: 1 });
+                Ok(out)
+            }
+        } else if first.is_uppercase() {
             let mut name = String::new();
-            let start_pos = self.pos;
             name.push(first);
             name.push_str(self.consume_while(|ch| ch.is_lowercase()).as_slice());
             let len = name.len();
-            Ok(Token{ tok: Elem(name), pos: start_pos, len: len })
+            Ok(vec!(Token{ tok: Elem(name), pos: start_pos, len: len }))
         } else {
             println!("{:?}", first);
             Err(CTError {

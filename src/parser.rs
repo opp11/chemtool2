@@ -190,4 +190,32 @@ mod test {
                             Token { tok: Coefficient(2), pos: 3, len: 1 });
         check_raw_result(raw_result, expected);
     }
+
+    #[test]
+    fn empty() {
+        let mut parser = Parser::new("");
+        let raw_result = parser.parse_molecule();
+        assert!(raw_result.is_err());
+    }
+
+    #[test]
+    fn no_uppercase() {
+        let mut parser = Parser::new("c");
+        let raw_result = parser.parse_molecule();
+        assert!(raw_result.is_err());
+    }
+
+    #[test]
+    fn paren_error() {
+        let mut parser = Parser::new("(C");
+        let raw_result = parser.parse_molecule();
+        assert!(raw_result.is_err());
+    }
+
+    #[test]
+    fn invald_num() {
+        let mut parser = Parser::new("C999999999999999999999");
+        let raw_result = parser.parse_molecule();
+        assert!(raw_result.is_err());
+    }
 }

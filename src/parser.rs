@@ -235,30 +235,56 @@ mod test {
     }
 
     #[test]
+    fn multiple_elems() {
+        let mut parser = Parser::new("C + H");
+        let raw_result = parser.parse_side();
+        let expected = vec!(Token { tok: Elem("C".to_string()), pos: 0, len: 1 },
+                            Token { tok: Plus, pos: 2, len: 1 },
+                            Token { tok: Elem("H".to_string()), pos: 4, len: 1 });
+        check_raw_result(raw_result, expected);
+    }
+
+    #[test]
+    fn reaction() {
+        let mut parser = Parser::new("C -> H");
+        let raw_result = parser.parse_reaction();
+        let expected = vec!(Token { tok: Elem("C".to_string()), pos: 0, len: 1 },
+                            Token { tok: LeftArrow, pos: 2, len: 2 },
+                            Token { tok: Elem("H".to_string()), pos: 5, len: 1 });
+        check_raw_result(raw_result, expected);
+    }
+
+    #[test]
     fn empty() {
         let mut parser = Parser::new("");
-        let raw_result = parser.parse_molecule();
-        assert!(raw_result.is_err());
+        assert!(parser.parse_molecule().is_err());
+        assert!(parser.parse_reaction().is_err());
     }
 
     #[test]
     fn no_uppercase() {
         let mut parser = Parser::new("c");
-        let raw_result = parser.parse_molecule();
-        assert!(raw_result.is_err());
+        assert!(parser.parse_molecule().is_err());
+        assert!(parser.parse_reaction().is_err());
     }
 
     #[test]
     fn paren_error() {
         let mut parser = Parser::new("(C");
-        let raw_result = parser.parse_molecule();
-        assert!(raw_result.is_err());
+        assert!(parser.parse_molecule().is_err());
+        assert!(parser.parse_reaction().is_err());
     }
 
     #[test]
     fn invald_num() {
         let mut parser = Parser::new("C999999999999999999999");
-        let raw_result = parser.parse_molecule();
-        assert!(raw_result.is_err());
+        assert!(parser.parse_molecule().is_err());
+        assert!(parser.parse_reaction().is_err());
+    }
+
+    #[test]
+    fn dangling_plus() {
+        let mut parser = Parser::new("C + -> H");
+        assert!(parser.parse_reaction().is_err());
     }
 }

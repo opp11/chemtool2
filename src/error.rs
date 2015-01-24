@@ -1,4 +1,4 @@
-#[derive(Show)]
+#[derive(Show, PartialEq)]
 pub struct CTError {
     pub desc: String,
     pub pos: usize,

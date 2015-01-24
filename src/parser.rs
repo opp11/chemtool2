@@ -36,6 +36,49 @@ impl Parser {
         Parser { pos: 0, input: String::from_str(input) }
     }
 
+    pub fn parse_reaction(&mut self) -> CTResult<Vec<Token>> {
+        let mut out = Vec::new();
+        let mut lhs = try!(self.parse_side());
+        out.extend(lhs.drain());
+        self.consume_whitespace();
+
+        // we do not care if some of the consumes are not called, since this is
+        // an error anyway, and will abort the parsing
+        if self.pos + 2 >= self.input.len() || self.consume_char() != '-' ||
+                                               self.consume_char() != '>' {
+            return Err(CTError {
+                desc: "Missing arrow (->) in chemical reaction".to_string(),
+                pos: self.pos - 2,
+                len: 1,
+            });
+        } else {
+            out.push(Token { tok: LeftArrow, pos: self.pos - 2, len: 2 });
+        }
+        self.consume_whitespace();
+
+        let mut rhs = try!(self.parse_side());
+        out.extend(rhs.drain());
+
+        Ok(out)
+    }
+
+    pub fn parse_side(&mut self) -> CTResult<Vec<Token>> {
+        let mut out = Vec::new();
+        let mut molecule = try!(self.parse_molecule());
+        out.extend(molecule.drain());
+        self.consume_whitespace();
+
+        if !self.eof() && self.peek_char() == '+' {
+            out.push(Token { tok: Plus, pos: self.pos, len: 1 });
+            self.consume_char();
+            self.consume_whitespace();
+            let mut rest = try!(self.parse_side());
+            out.extend(rest.drain());
+        }
+
+        Ok(out)
+    }
+
     pub fn parse_molecule(&mut self) -> CTResult<Vec<Token>> {
         let mut out = Vec::new();
         let mut per = try!(self.parse_periodic());

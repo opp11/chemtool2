@@ -11,4 +11,6 @@ pub enum TokenKind {
     Coefficient(u32),
     ParenOpen,
     ParenClose,
+    Plus,
+    LeftArrow,
 }

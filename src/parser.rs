@@ -24,7 +24,8 @@
 use std::str::CharRange;
 use token::Token;
 use token::TokenKind::*;
-use error::{CTResult, CTError};
+use error::{CTResult, CTSyntaxError};
+use error::CTError::SyntaxError;
 
 pub struct Parser {
     pos: usize,
@@ -46,11 +47,11 @@ impl Parser {
         // an error anyway, and will abort the parsing
         if self.pos + 2 >= self.input.len() || self.consume_char() != '-' ||
                                                self.consume_char() != '>' {
-            return Err(CTError {
+            return Err(SyntaxError(CTSyntaxError {
                 desc: "Missing arrow (->) in chemical reaction".to_string(),
                 pos: self.pos - 2,
                 len: 1,
-            });
+            }));
         } else {
             out.push(Token { tok: LeftArrow, pos: self.pos - 2, len: 2 });
         }
@@ -108,11 +109,11 @@ impl Parser {
 
     fn parse_element(&mut self) -> CTResult<Vec<Token>> {
         if self.eof() {
-            return Err(CTError {
+            return Err(SyntaxError(CTSyntaxError {
                 desc: "Found no periodic element".to_string(),
                 pos: self.pos,
                 len: 1,
-            });
+            }));
         }
         let start_pos = self.pos;
         let first = self.consume_char();
@@ -123,11 +124,11 @@ impl Parser {
             out.extend(molecule.drain());
 
             if self.eof() || self.consume_char() != ')' {
-                Err(CTError {
+                Err(SyntaxError(CTSyntaxError {
                     desc: "Missing closing parentheses".to_string(),
                     pos: self.pos - 1,
                     len: 1,
-                })
+                }))
             } else {
                 out.push(Token { tok: ParenClose, pos: self.pos - 1, len: 1 });
                 Ok(out)
@@ -140,11 +141,11 @@ impl Parser {
             Ok(vec!(Token{ tok: Elem(name), pos: start_pos, len: len }))
         } else {
             println!("{:?}", first);
-            Err(CTError {
+            Err(SyntaxError(CTSyntaxError {
                 desc: "Missing uppercase letter at the beginning of the element".to_string(),
                 pos: self.pos - 1,
                 len: 1,
-            })
+            }))
         }
     }
 
@@ -154,11 +155,11 @@ impl Parser {
         if let Some(num) = num_str.parse::<u32>() {
             Ok(Token { tok: Coefficient(num), pos: start_pos, len: num_str.len() })
         } else {
-            Err(CTError {
+            Err(SyntaxError(CTSyntaxError {
                 desc: "Could not parse coefficient".to_string(),
                 pos: start_pos,
                 len: num_str.len(),
-            })
+            }))
         }
     }
 

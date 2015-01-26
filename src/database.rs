@@ -73,3 +73,30 @@ pub fn decode_line(line: &String) -> CTResult<ElemData> {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn decode() {
+        let raw_result = decode_line(&"A;123.456789;Abba;12".to_string());
+        let expected = ElemData {
+            short_name: "A".to_string(),
+            long_name: "Abba".to_string(),
+            mass: 123.456789,
+            atomic_num: 12,
+        };
+        assert_eq!(Ok(expected), raw_result);
+    }
+
+    #[test]
+    fn missing_field() {
+        assert!(decode_line(&"A;".to_string()).is_err());
+    }
+
+    #[test]
+    fn field_corrupted() {
+        assert!(decode_line(&"A;not a number;Abba;12".to_string()).is_err());
+    }
+}

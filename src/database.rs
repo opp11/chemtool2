@@ -50,7 +50,7 @@ impl ElemDatabase {
     }
 }
 
-fn decode_line(line: &String) -> CTResult<ElemData> {
+pub fn decode_line(line: &String) -> CTResult<ElemData> {
     let data: Vec<&str> = line.trim().split(';').collect();
     if data.len() < 4 {
         Err(DatabaseError(CTDatabaseError {

@@ -4,7 +4,7 @@ use error::CTError::{DatabaseError, SyntaxError};
 use token::Token;
 use token::TokenKind::Elem;
 
-#[derive(Show)]
+#[derive(Show, PartialEq)]
 pub struct ElemData {
     short_name: String,
     long_name: String,

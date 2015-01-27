@@ -1,4 +1,5 @@
 use std::io::{File, BufferedReader};
+use std::io::SeekStyle::SeekSet;
 use error::{CTResult, CTDatabaseError, CTSyntaxError};
 use error::CTError::{DatabaseError, SyntaxError};
 use token::Token;
@@ -27,6 +28,9 @@ impl ElemDatabase {
     }
 
     pub fn get_single_data(&mut self, elem: &Token) -> CTResult<ElemData> {
+        // we return to the beginning of the underlying file, since the data
+        // might lie on a line we have previously read past
+        self.db.get_mut().seek(0, SeekSet);
         let mut line_iter = self.db.lines();
         let short_name = match elem.tok {
             Elem(ref name) => name.as_slice(),

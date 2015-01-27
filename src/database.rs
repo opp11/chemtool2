@@ -54,7 +54,7 @@ impl ElemDatabase {
     }
 }
 
-pub fn decode_line(line: &String) -> CTResult<ElemData> {
+fn decode_line(line: &String) -> CTResult<ElemData> {
     let data: Vec<&str> = line.trim().split(';').collect();
     if data.len() < 4 {
         Err(DatabaseError(CTDatabaseError {
@@ -78,29 +78,60 @@ pub fn decode_line(line: &String) -> CTResult<ElemData> {
     }
 }
 
+
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::io::File;
+    use std::io::fs;
+    use token::Token;
+    use token::TokenKind::Elem;
+
+    fn make_dummy_db(name: &str, contents: &str) -> ElemDatabase {
+        if let Err(e) = File::create(&Path::new(name)).and_then(|mut f| f.write_str(contents)) {
+            // if we can't make the database we can't test, so just abort here
+            panic!("Could not create dummy database: {:?}", e.desc);
+        }
+        ElemDatabase::open(name).unwrap()
+    }
+
+    fn remove_dummy_db(name: &str) {
+        if let Err(e) = fs::unlink(&Path::new(name)) {
+            // if we can't remove the database something is wrong, and we abort the test
+            panic!("Could not remove dummy database: {:?}", e.desc);
+        }
+    }
 
     #[test]
     fn decode() {
-        let raw_result = decode_line(&"A;123.456789;Abba;12".to_string());
+        let db_name = "decode_test_db";
+        let mut db = make_dummy_db(db_name, "A;123.456789;Abba;12");
+        let raw_result = db.get_single_data(&Token { tok: Elem("A".to_string()), pos: 0, len: 2 });
         let expected = ElemData {
             short_name: "A".to_string(),
             long_name: "Abba".to_string(),
             mass: 123.456789,
             atomic_num: 12,
         };
+        remove_dummy_db(db_name);
         assert_eq!(Ok(expected), raw_result);
     }
 
     #[test]
     fn missing_field() {
-        assert!(decode_line(&"A;".to_string()).is_err());
+        let db_name = "missing_field_db";
+        let mut db = make_dummy_db(db_name, "A;");
+        let result = db.get_single_data(&Token { tok: Elem("A".to_string()), pos: 0, len: 2 });
+        remove_dummy_db(db_name);
+        assert!(result.is_err());
     }
 
     #[test]
     fn field_corrupted() {
-        assert!(decode_line(&"A;not a number;Abba;12".to_string()).is_err());
+        let db_name = "field_corrupted_db";
+        let mut db = make_dummy_db(db_name, "A;not a number;Abba;12");
+        let result = db.get_single_data(&Token { tok: Elem("A".to_string()), pos: 0, len: 2 });
+        remove_dummy_db(db_name);
+        assert!(result.is_err());
     }
 }

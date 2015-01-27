@@ -36,20 +36,16 @@ impl ElemDatabase {
             Elem(ref name) => name.as_slice(),
             _ => unreachable!(),
         };
-        // TODO: Make this cleaner, and avoid returns
-        loop {
-            match line_iter.next() {
-                Some(Ok(ref line)) if line.starts_with(short_name) => return decode_line(line),
-                Some(Err(_)) => return Err(DatabaseError(CTDatabaseError {
-                    desc: "Error reading the database".to_string()
-                })),
-                None => return Err(SyntaxError(CTSyntaxError {
-                    desc: format!("Could not find element: {:?}", short_name),
-                    pos: elem.pos,
-                    len: elem.len,
-                })),
-                _ => (),
-            }
+        match line_iter.find(|l| l.is_err() || l.as_ref().ok().unwrap().starts_with(short_name)) {
+            Some(Ok(ref line)) => decode_line(line),
+            Some(Err(_)) => Err(DatabaseError(CTDatabaseError {
+                desc: "Error reading the database".to_string()
+            })),
+            None => Err(SyntaxError(CTSyntaxError {
+                desc: format!("Could not find element: {:?}", short_name),
+                pos: elem.pos,
+                len: elem.len,
+            })),
         }
     }
 }

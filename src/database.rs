@@ -1,5 +1,6 @@
 use std::io::{File, BufferedReader};
 use std::io::SeekStyle::SeekSet;
+use std::io::IoResult;
 use error::{CTResult, CTDatabaseError, CTSyntaxError};
 use error::CTError::{DatabaseError, SyntaxError};
 use token::Token;
@@ -36,7 +37,14 @@ impl ElemDatabase {
             Elem(ref name) => name.as_slice(),
             _ => unreachable!(),
         };
-        match line_iter.find(|l| l.is_err() || l.as_ref().ok().unwrap().starts_with(short_name)) {
+        let pred = |&:line: &IoResult<String>| {
+            if let Ok(ref l) = *line {
+                l.starts_with(short_name)
+            } else {
+                true
+            }
+        };
+        match line_iter.find(pred) {
             Some(Ok(ref line)) => decode_line(line),
             Some(Err(_)) => Err(DatabaseError(CTDatabaseError {
                 desc: "Error reading the database".to_string()

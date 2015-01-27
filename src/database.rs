@@ -100,7 +100,7 @@ mod test {
 
     #[test]
     fn decode() {
-        let db_name = "decode_test_db";
+        let db_name = "decode_db";
         let mut db = make_dummy_db(db_name, "A;123.456789;Abba;12");
         let raw_result = db.get_single_data(&Token { tok: Elem("A".to_string()), pos: 0, len: 2 });
         let expected = ElemData {

@@ -110,6 +110,61 @@ mod test {
     }
 
     #[test]
+    fn multiple_elems() {
+        let db_name = "multiple_elems_db";
+        let mut db = make_dummy_db(db_name,
+            "A;1;Abba;2\n\
+            B;3;Beta;4");
+        let raw_result = db.get_data(&vec!(
+            Token { tok: Elem("B".to_string()), pos: 0, len: 1 },
+            Token { tok: Elem("A".to_string()), pos: 1, len: 1 }
+        ));
+        let expected = vec!(
+            ElemData {
+                short_name: "B".to_string(),
+                long_name: "Beta".to_string(),
+                mass: 3.0,
+                atomic_num: 4,
+            },
+            ElemData {
+                short_name: "A".to_string(),
+                long_name: "Abba".to_string(),
+                mass: 1.0,
+                atomic_num: 2,
+            }
+        );
+        remove_dummy_db(db_name);
+        assert_eq!(Ok(expected), raw_result);
+    }
+
+    #[test]
+    fn find_elem() {
+        let db_name = "find_elem_db";
+        let mut db = make_dummy_db(db_name,
+            "A;0;Abba;0\n\
+            B;123.456789;Beta;12\n\
+            C;0;Coop;0");
+        let raw_result = db.get_single_data(&Token { tok: Elem("B".to_string()), pos: 0, len: 2 });
+        let expected = ElemData {
+            short_name: "B".to_string(),
+            long_name: "Beta".to_string(),
+            mass: 123.456789,
+            atomic_num: 12,
+        };
+        remove_dummy_db(db_name);
+        assert_eq!(Ok(expected), raw_result);
+    }
+
+    #[test]
+    fn missing_elem() {
+        let db_name = "missing_elem_db";
+        let mut db = make_dummy_db(db_name, "A;123.456789;Abba;12");
+        let result = db.get_single_data(&Token { tok: Elem("B".to_string()), pos: 0, len: 2 });
+        remove_dummy_db(db_name);
+        assert!(result.is_err());
+    }
+
+    #[test]
     fn decode() {
         let db_name = "decode_db";
         let mut db = make_dummy_db(db_name, "A;123.456789;Abba;12");

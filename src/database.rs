@@ -48,6 +48,17 @@ impl ElemDatabase {
             })),
         }
     }
+
+    pub fn get_data(&mut self, elems: &Vec<Token>) -> CTResult<Vec<ElemData>> {
+        let mut out = Vec::new();
+        for elem in elems.iter() {
+           match self.get_single_data(elem) {
+                Ok(data) => out.push(data),
+                Err(e) => return Err(e),
+            }
+        }
+        Ok(out)
+    }
 }
 
 fn decode_line(line: &String) -> CTResult<ElemData> {

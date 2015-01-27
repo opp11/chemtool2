@@ -26,7 +26,7 @@ impl ElemDatabase {
         }
     }
 
-    pub fn get_elem_data(&mut self, elem: &Token) -> CTResult<ElemData> {
+    pub fn get_single_data(&mut self, elem: &Token) -> CTResult<ElemData> {
         let mut line_iter = self.db.lines();
         let short_name = match elem.tok {
             Elem(ref name) => name.as_slice(),

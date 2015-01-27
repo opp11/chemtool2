@@ -30,7 +30,7 @@ impl ElemDatabase {
     pub fn get_single_data(&mut self, elem: &Token) -> CTResult<ElemData> {
         // we return to the beginning of the underlying file, since the data
         // might lie on a line we have previously read past
-        self.db.get_mut().seek(0, SeekSet);
+        self.db.get_mut().seek(0, SeekSet).ok().expect("Internal error reading database");
         let mut line_iter = self.db.lines();
         let short_name = match elem.tok {
             Elem(ref name) => name.as_slice(),

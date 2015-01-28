@@ -53,7 +53,7 @@ impl Parser {
                 len: 1,
             }));
         } else {
-            out.push(Token { tok: LeftArrow, pos: self.pos - 2, len: 2 });
+            out.push(Token { tok: RightArrow, pos: self.pos - 2, len: 2 });
         }
         self.consume_whitespace();
 
@@ -250,7 +250,7 @@ mod test {
         let mut parser = Parser::new("C -> H");
         let raw_result = parser.parse_reaction();
         let expected = vec!(Token { tok: Elem("C".to_string()), pos: 0, len: 1 },
-                            Token { tok: LeftArrow, pos: 2, len: 2 },
+                            Token { tok: RightArrow, pos: 2, len: 2 },
                             Token { tok: Elem("H".to_string()), pos: 5, len: 1 });
         check_raw_result(raw_result, expected);
     }

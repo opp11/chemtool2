@@ -12,5 +12,5 @@ pub enum TokenKind {
     ParenOpen,
     ParenClose,
     Plus,
-    LeftArrow,
+    RightArrow,
 }

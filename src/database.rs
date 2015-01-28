@@ -37,14 +37,14 @@ impl ElemDatabase {
             Elem(ref name) => name.as_slice(),
             _ => unreachable!(),
         };
-        let pred = |&:line: &IoResult<String>| {
+        let elem_or_err = |&:line: &IoResult<String>| {
             if let Ok(ref l) = *line {
                 l.starts_with(short_name)
             } else {
                 true
             }
         };
-        match line_iter.find(pred) {
+        match line_iter.find(elem_or_err) {
             Some(Ok(ref line)) => decode_line(line),
             Some(Err(_)) => Err(DatabaseError(CTDatabaseError {
                 desc: "Error reading the database".to_string()

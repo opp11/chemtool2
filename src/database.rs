@@ -3,7 +3,7 @@ use std::io::SeekStyle::SeekSet;
 use std::io::IoResult;
 use error::{CTResult, CTDatabaseError, CTSyntaxError};
 use error::CTError::{DatabaseError, SyntaxError};
-use token::{PerElem, Molecule}  ;
+use elem::{PerElem, Molecule}  ;
 
 #[derive(Show, PartialEq)]
 pub struct ElemData {
@@ -94,7 +94,7 @@ mod test {
     use super::*;
     use std::io::File;
     use std::io::fs;
-    use token::PerElem;
+    use elem::PerElem;
 
     fn make_dummy_db(name: &str, contents: &str) -> ElemDatabase {
         if let Err(e) = File::create(&Path::new(name)).and_then(|mut f| f.write_str(contents)) {

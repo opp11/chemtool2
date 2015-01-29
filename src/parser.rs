@@ -22,7 +22,7 @@
 //! C --> <number>
 
 use std::str::CharRange;
-use token::{PerElem, Molecule};
+use elem::{PerElem, Molecule};
 use error::{CTResult, CTSyntaxError};
 use error::CTError::SyntaxError;
 
@@ -180,7 +180,7 @@ impl Parser {
 #[cfg(test)]
 mod test {
     use super::*;
-    use token::PerElem;
+    use elem::PerElem;
 
     macro_rules! check_raw_result(
         ($raw:expr, $expected:expr) => (

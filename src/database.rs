@@ -116,7 +116,7 @@ mod test {
         let db_name = "multiple_elems_db";
         let mut db = make_dummy_db(db_name,
             "A;1;Abba;2\n\
-            B;3;Beta;4");
+            B;3;Beta;4\n");
         let raw_result = db.get_data(&vec!(
             PerElem { name: "B".to_string(), coef: 1, pos: 0, len: 1 },
             PerElem { name: "A".to_string(), coef: 1, pos: 1, len: 1 }
@@ -145,7 +145,7 @@ mod test {
         let mut db = make_dummy_db(db_name,
             "A;0;Abba;0\n\
             B;123.456789;Beta;12\n\
-            C;0;Coop;0");
+            C;0;Coop;0\n");
         let raw_result = db.get_single_data(
             &PerElem { name: "B".to_string(), coef: 1, pos: 0, len: 2 }
         );
@@ -162,7 +162,7 @@ mod test {
     #[test]
     fn missing_elem() {
         let db_name = "missing_elem_db";
-        let mut db = make_dummy_db(db_name, "A;123.456789;Abba;12");
+        let mut db = make_dummy_db(db_name, "A;123.456789;Abba;12\n");
         let result = db.get_single_data(
             &PerElem { name: "B".to_string(), coef: 1, pos: 0, len: 2 }
         );
@@ -184,7 +184,7 @@ mod test {
     #[test]
     fn field_corrupted() {
         let db_name = "field_corrupted_db";
-        let mut db = make_dummy_db(db_name, "A;not a number;Abba;12");
+        let mut db = make_dummy_db(db_name, "A;not a number;Abba;12\n");
         let result = db.get_single_data(
             &PerElem { name: "A".to_string(), coef: 1, pos: 0, len: 2 }
         );

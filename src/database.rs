@@ -7,10 +7,10 @@ use elem::{PerElem, Molecule};
 
 #[derive(Show, PartialEq)]
 pub struct ElemData {
-    short_name: String,
-    long_name: String,
-    mass: f64,
-    atomic_num: u16,
+    pub short_name: String,
+    pub long_name: String,
+    pub mass: f64,
+    pub atomic_num: u16,
 }
 
 pub struct ElemDatabase {

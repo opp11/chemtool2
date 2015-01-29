@@ -66,8 +66,8 @@ impl Parser {
         if !self.eof() && self.peek_char() == '+' {
             self.consume_char();
             self.consume_whitespace();
-            let rest = try!(self.parse_side());
-            out.extend(rest.into_iter());
+            let mut rest = try!(self.parse_side());
+            out.append(&mut rest);
         }
 
         Ok(out)
@@ -75,13 +75,13 @@ impl Parser {
 
     pub fn parse_molecule(&mut self) -> CTResult<Molecule> {
         let mut out = Vec::new();
-        let per = try!(self.parse_periodic());
-        out.extend(per.into_iter());
+        let mut per = try!(self.parse_periodic());
+        out.append(&mut per);
 
         // TODO: Make this cleaner
         if !self.eof() && (self.peek_char().is_alphabetic() || self.peek_char() == '(') {
-            let molecule = try!(self.parse_molecule());
-            out.extend(molecule.into_iter());
+            let mut molecule = try!(self.parse_molecule());
+            out.append(&mut molecule);
         }
 
         Ok(out)

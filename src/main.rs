@@ -4,10 +4,12 @@ mod elem;
 mod parser;
 mod error;
 mod database;
+mod mass;
 
 #[cfg(not(test))]
 fn main() {
-    let mut db = ElemDatabase::open("elemdb.csv").ok().unwrap();
-    let tok = Token { tok: Elem("He".to_string()), pos: 0, len: 2 };
-    println!("{:?}", db.get_single_data(&tok));
+    let input = "CH3";
+    if let Err(e) = mass::pretty_print_mass(input, "elemdb.csv") {
+        println!("{:?}", e);
+    }
 }

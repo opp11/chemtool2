@@ -22,8 +22,7 @@
 //! C --> <number>
 
 use std::str::CharRange;
-use token::Token;
-use token::TokenKind::*;
+use token::{PerElem, Molecule};
 use error::{CTResult, CTSyntaxError};
 use error::CTError::SyntaxError;
 
@@ -37,10 +36,8 @@ impl Parser {
         Parser { pos: 0, input: String::from_str(input) }
     }
 
-    pub fn parse_reaction(&mut self) -> CTResult<Vec<Token>> {
-        let mut out = Vec::new();
-        let mut lhs = try!(self.parse_side());
-        out.extend(lhs.drain());
+    pub fn parse_reaction(&mut self) -> CTResult<(Vec<Molecule>, Vec<Molecule>)> {
+        let lhs = try!(self.parse_side());
         self.consume_whitespace();
 
         // we do not care if some of the consumes are not called, since this is
@@ -52,62 +49,58 @@ impl Parser {
                 pos: self.pos - 2,
                 len: 1,
             }));
-        } else {
-            out.push(Token { tok: RightArrow, pos: self.pos - 2, len: 2 });
         }
         self.consume_whitespace();
 
-        let mut rhs = try!(self.parse_side());
-        out.extend(rhs.drain());
+        let rhs = try!(self.parse_side());
 
-        Ok(out)
+        Ok((lhs, rhs))
     }
 
-    pub fn parse_side(&mut self) -> CTResult<Vec<Token>> {
+    pub fn parse_side(&mut self) -> CTResult<Vec<Molecule>> {
         let mut out = Vec::new();
-        let mut molecule = try!(self.parse_molecule());
-        out.extend(molecule.drain());
+        let molecule = try!(self.parse_molecule());
+        out.push(molecule);
         self.consume_whitespace();
 
         if !self.eof() && self.peek_char() == '+' {
-            out.push(Token { tok: Plus, pos: self.pos, len: 1 });
             self.consume_char();
             self.consume_whitespace();
-            let mut rest = try!(self.parse_side());
-            out.extend(rest.drain());
+            let rest = try!(self.parse_side());
+            out.extend(rest.into_iter());
         }
 
         Ok(out)
     }
 
-    pub fn parse_molecule(&mut self) -> CTResult<Vec<Token>> {
+    pub fn parse_molecule(&mut self) -> CTResult<Molecule> {
         let mut out = Vec::new();
-        let mut per = try!(self.parse_periodic());
-        out.extend(per.drain());
+        let per = try!(self.parse_periodic());
+        out.extend(per.into_iter());
 
         // TODO: Make this cleaner
         if !self.eof() && (self.peek_char().is_alphabetic() || self.peek_char() == '(') {
-            let mut molecule = try!(self.parse_molecule());
-            out.extend(molecule.drain());
+            let molecule = try!(self.parse_molecule());
+            out.extend(molecule.into_iter());
         }
 
         Ok(out)
     }
 
-    fn parse_periodic(&mut self) -> CTResult<Vec<Token>> {
-        let mut out = Vec::new();
+    fn parse_periodic(&mut self) -> CTResult<Vec<PerElem>> {
         let mut elem = try!(self.parse_element());
-        out.extend(elem.drain());
 
         if !self.eof() && self.peek_char().is_numeric() {
             let coef = try!(self.parse_coefficient());
-            out.push(coef);
+            for e in elem.iter_mut() {
+                e.coef *= coef;
+            }
         }
 
-        Ok(out)
+        Ok(elem)
     }
 
-    fn parse_element(&mut self) -> CTResult<Vec<Token>> {
+    fn parse_element(&mut self) -> CTResult<Vec<PerElem>> {
         if self.eof() {
             return Err(SyntaxError(CTSyntaxError {
                 desc: "Found no periodic element".to_string(),
@@ -118,11 +111,7 @@ impl Parser {
         let start_pos = self.pos;
         let first = self.consume_char();
         if first == '(' {
-            let mut out = Vec::new();
-            out.push(Token { tok: ParenOpen, pos: start_pos, len: 1 });
-            let mut molecule = try!(self.parse_molecule());
-            out.extend(molecule.drain());
-
+            let molecule = try!(self.parse_molecule());
             if self.eof() || self.consume_char() != ')' {
                 Err(SyntaxError(CTSyntaxError {
                     desc: "Missing closing parentheses".to_string(),
@@ -130,17 +119,15 @@ impl Parser {
                     len: 1,
                 }))
             } else {
-                out.push(Token { tok: ParenClose, pos: self.pos - 1, len: 1 });
-                Ok(out)
+                Ok(molecule)
             }
         } else if first.is_uppercase() {
             let mut name = String::new();
             name.push(first);
             name.push_str(self.consume_while(|ch| ch.is_lowercase()).as_slice());
             let len = name.len();
-            Ok(vec!(Token{ tok: Elem(name), pos: start_pos, len: len }))
+            Ok(vec!(PerElem { name: name, coef: 1, pos: start_pos, len: len }))
         } else {
-            println!("{:?}", first);
             Err(SyntaxError(CTSyntaxError {
                 desc: "Missing uppercase letter at the beginning of the element".to_string(),
                 pos: self.pos - 1,
@@ -149,11 +136,11 @@ impl Parser {
         }
     }
 
-    fn parse_coefficient(&mut self) -> CTResult<Token> {
+    fn parse_coefficient(&mut self) -> CTResult<u32> {
         let start_pos = self.pos;
         let num_str = self.consume_while(|ch| ch.is_numeric());
         if let Some(num) = num_str.parse::<u32>() {
-            Ok(Token { tok: Coefficient(num), pos: start_pos, len: num_str.len() })
+            Ok(num)
         } else {
             Err(SyntaxError(CTSyntaxError {
                 desc: "Could not parse coefficient".to_string(),
@@ -193,66 +180,61 @@ impl Parser {
 #[cfg(test)]
 mod test {
     use super::*;
-    use error::CTResult;
-    use token::Token;
-    use token::TokenKind::*;
+    use token::PerElem;
 
-    fn check_raw_result(raw_result: CTResult<Vec<Token>>, expected: Vec<Token>) {
-        if let Ok(result) = raw_result {
-            assert_eq!(result, expected);
-        } else {
-            panic!(raw_result);
-        }
-    }
+    macro_rules! check_raw_result(
+        ($raw:expr, $expected:expr) => (
+            if let Ok(result) = $raw {
+                assert_eq!(result, $expected);
+            } else {
+                panic!($raw);
+            }
+        )
+    );
 
     #[test]
     fn elems() {
         let mut parser = Parser::new("CHeH");
         let raw_result = parser.parse_molecule();
-        let expected = vec!(Token { tok: Elem("C".to_string()), pos: 0, len: 1 },
-                            Token { tok: Elem("He".to_string()), pos: 1, len: 2 },
-                            Token { tok: Elem("H".to_string()), pos: 3, len: 1 });
-        check_raw_result(raw_result, expected);
+        let expected = vec!(PerElem { name: "C".to_string(), coef: 1, pos: 0, len: 1 },
+                            PerElem { name: "He".to_string(), coef: 1, pos: 1, len: 2 },
+                            PerElem { name: "H".to_string(), coef: 1, pos: 3, len: 1 });
+        check_raw_result!(raw_result, expected);
     }
 
     #[test]
     fn coefs() {
         let mut parser = Parser::new("C23");
         let raw_result = parser.parse_molecule();
-        let expected = vec!(Token { tok: Elem("C".to_string()), pos: 0, len: 1 },
-                            Token { tok: Coefficient(23), pos: 1, len: 2 });
-        check_raw_result(raw_result, expected);
+        let expected = vec!(PerElem { name: "C".to_string(), coef: 23, pos: 0, len: 1 });
+        check_raw_result!(raw_result, expected);
     }
 
     #[test]
     fn parens() {
-        let mut parser = Parser::new("(C)2");
+        let mut parser = Parser::new("(CH3)2");
         let raw_result = parser.parse_molecule();
-        let expected = vec!(Token { tok: ParenOpen, pos: 0, len: 1 },
-                            Token { tok: Elem("C".to_string()), pos: 1, len: 1},
-                            Token { tok: ParenClose, pos: 2, len: 1},
-                            Token { tok: Coefficient(2), pos: 3, len: 1 });
-        check_raw_result(raw_result, expected);
+        let expected = vec!(PerElem { name: "C".to_string(), coef: 2, pos: 1, len: 1 },
+                            PerElem { name: "H".to_string(), coef: 6, pos: 2, len: 1 });
+        check_raw_result!(raw_result, expected);
     }
 
     #[test]
     fn multiple_elems() {
         let mut parser = Parser::new("C + H");
         let raw_result = parser.parse_side();
-        let expected = vec!(Token { tok: Elem("C".to_string()), pos: 0, len: 1 },
-                            Token { tok: Plus, pos: 2, len: 1 },
-                            Token { tok: Elem("H".to_string()), pos: 4, len: 1 });
-        check_raw_result(raw_result, expected);
+        let expected = vec!(vec!(PerElem { name: "C".to_string(), coef: 1, pos: 0, len: 1 }),
+                            vec!(PerElem { name: "H".to_string(), coef: 1, pos: 4, len: 1 }));
+        check_raw_result!(raw_result, expected);
     }
 
     #[test]
     fn reaction() {
         let mut parser = Parser::new("C -> H");
         let raw_result = parser.parse_reaction();
-        let expected = vec!(Token { tok: Elem("C".to_string()), pos: 0, len: 1 },
-                            Token { tok: RightArrow, pos: 2, len: 2 },
-                            Token { tok: Elem("H".to_string()), pos: 5, len: 1 });
-        check_raw_result(raw_result, expected);
+        let expected = (vec!(vec!(PerElem { name: "C".to_string(), coef: 1, pos: 0, len: 1 })),
+                        vec!(vec!(PerElem { name: "H".to_string(), coef: 1, pos: 5, len: 1 })));
+        check_raw_result!(raw_result, expected);
     }
 
     #[test]

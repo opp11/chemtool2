@@ -3,6 +3,7 @@
 mod token;
 mod parser;
 mod error;
+mod database;
 
 #[cfg(not(test))]
 fn main() {

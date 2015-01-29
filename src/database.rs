@@ -3,7 +3,7 @@ use std::io::SeekStyle::SeekSet;
 use std::io::IoResult;
 use error::{CTResult, CTDatabaseError, CTSyntaxError};
 use error::CTError::{DatabaseError, SyntaxError};
-use elem::{PerElem, Molecule}  ;
+use elem::{PerElem, Molecule};
 
 #[derive(Show, PartialEq)]
 pub struct ElemData {

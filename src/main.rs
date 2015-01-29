@@ -9,6 +9,7 @@ mod token;
 mod parser;
 mod error;
 mod database;
+mod mass;
 
 #[cfg(not(test))]
 fn main() {

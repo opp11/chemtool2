@@ -14,3 +14,21 @@ pub enum TokenKind {
     Plus,
     RightArrow,
 }
+
+impl TokenKind {
+    pub fn elem(&self) -> Option<&String> {
+        if let TokenKind::Elem(ref name) = *self {
+            Some(name)
+        } else {
+            None
+        }
+    }
+
+    pub fn coef(&self) -> Option<&u32> {
+        if let TokenKind::Coefficient(ref coef) = *self {
+            Some(coef)
+        } else {
+            None
+        }
+    }
+}

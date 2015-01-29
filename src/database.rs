@@ -1,9 +1,14 @@
-use std::io::{File, BufferedReader};
+use std::io::File;
 use std::io::SeekStyle::SeekSet;
-use std::io::IoResult;
 use error::{CTResult, CTDatabaseError, CTSyntaxError};
 use error::CTError::{DatabaseError, SyntaxError};
 use elem::{PerElem, Molecule};
+
+macro_rules! read_err (
+    () => (Err(DatabaseError(CTDatabaseError {
+        desc: "Error reading the database".to_string()
+    })));
+);
 
 #[derive(Show, PartialEq)]
 pub struct ElemData {
@@ -14,13 +19,13 @@ pub struct ElemData {
 }
 
 pub struct ElemDatabase {
-    db: BufferedReader<File>,
+    db: File,
 }
 
 impl ElemDatabase {
     pub fn open(path: &str) -> CTResult<ElemDatabase> {
         match File::open(&Path::new(path)) {
-            Ok(db_file) => Ok(ElemDatabase { db: BufferedReader::new(db_file) }),
+            Ok(db_file) => Ok(ElemDatabase { db: db_file }),
             Err(_) => Err(DatabaseError(CTDatabaseError {
                 desc: format!("Could not open database file. Expected at: {:?}", path)
             })),
@@ -30,25 +35,19 @@ impl ElemDatabase {
     pub fn get_single_data(&mut self, elem: &PerElem) -> CTResult<ElemData> {
         // we return to the beginning of the underlying file, since the data
         // might lie on a line we have previously read past
-        self.db.get_mut().seek(0, SeekSet).ok().expect("Internal error reading database");
-        let mut line_iter = self.db.lines();
-        let elem_or_err = |&:line: &IoResult<String>| {
-            if let Ok(ref l) = *line {
-                l.starts_with(elem.name.as_slice())
-            } else {
-                true
+        self.db.seek(0, SeekSet).ok().expect("Internal error reading database");
+
+        loop {
+            let line = try!(self.read_line());
+            if line.starts_with(elem.name.as_slice()) {
+                return decode_line(&line);
+            } else if self.db.eof() {
+                return Err(SyntaxError(CTSyntaxError {
+                    desc: format!("Could not find element: {:?}", elem.name),
+                    pos: elem.pos,
+                    len: elem.len,
+                }));
             }
-        };
-        match line_iter.find(elem_or_err) {
-            Some(Ok(ref line)) => decode_line(line),
-            Some(Err(_)) => Err(DatabaseError(CTDatabaseError {
-                desc: "Error reading the database".to_string()
-            })),
-            None => Err(SyntaxError(CTSyntaxError {
-                desc: format!("Could not find element: {:?}", elem.name),
-                pos: elem.pos,
-                len: elem.len,
-            })),
         }
     }
 
@@ -61,6 +60,19 @@ impl ElemDatabase {
             }
         }
         Ok(out)
+    }
+
+    fn read_line(&mut self) -> CTResult<String> {
+        // we know that no line in the database is more than 30 characters long
+        let mut buf = Vec::with_capacity(30);
+        loop {
+            match self.db.read_byte() {
+                Ok(b) if b == b'\n' => break,
+                Ok(b) => buf.push(b),
+                Err(_) => return read_err!()
+            }
+        }
+        String::from_utf8(buf).or_else(|_| read_err!())
     }
 }
 

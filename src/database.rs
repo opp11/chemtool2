@@ -171,23 +171,6 @@ mod test {
     }
 
     #[test]
-    fn decode() {
-        let db_name = "decode_db";
-        let mut db = make_dummy_db(db_name, "A;123.456789;Abba;12");
-        let raw_result = db.get_single_data(
-            &PerElem { name: "A".to_string(), coef: 1, pos: 0, len: 2 }
-        );
-        let expected = ElemData {
-            short_name: "A".to_string(),
-            long_name: "Abba".to_string(),
-            mass: 123.456789,
-            atomic_num: 12,
-        };
-        remove_dummy_db(db_name);
-        assert_eq!(Ok(expected), raw_result);
-    }
-
-    #[test]
     fn missing_field() {
         let db_name = "missing_field_db";
         let mut db = make_dummy_db(db_name, "A;");

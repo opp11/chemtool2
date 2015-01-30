@@ -3,3 +3,7 @@
 name = "chemtool"
 version = "0.0.1"
 authors = ["Patrick M Jensen <patmjen@gmail.com>"]
+
+[dependencies]
+docopt = "*"
+rustc-serialize = "*"

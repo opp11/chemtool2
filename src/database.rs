@@ -55,7 +55,7 @@ impl ElemDatabase {
     pub fn get_data(&mut self, elems: &Molecule) -> CTResult<Vec<ElemData>> {
         let mut out = Vec::new();
         for elem in elems.iter() {
-           match self.get_single_data(elem) {
+            match self.get_single_data(elem) {
                 Ok(data) => out.push(data),
                 Err(e) => return Err(e),
             }

@@ -1,5 +1,6 @@
 use std::old_io::File;
 use std::old_io::SeekStyle::SeekSet;
+use std::old_io::IoErrorKind::EndOfFile;
 use elem::{PerElem, Molecule};
 use error::{CTError, CTResult};
 use error::CTErrorKind::{SyntaxError, DatabaseError};
@@ -43,15 +44,10 @@ impl ElemDatabase {
         self.db.seek(0, SeekSet).ok().expect("Internal error reading database");
 
         loop {
-            let line = try!(self.read_line());
+            // TODO: make so this function returns the 'not found' error
+            let line = try!(self.read_line(elem));
             if line.starts_with(elem.name.as_slice()) {
                 return decode_line(&line);
-            } else if self.db.eof() {
-                return Err(CTError {
-                    kind: SyntaxError,
-                    desc: format!("Could not find element: {:?}", elem.name),
-                    pos: Some((elem.pos, elem.len)),
-                });
             }
         }
     }
@@ -67,13 +63,19 @@ impl ElemDatabase {
         Ok(out)
     }
 
-    fn read_line(&mut self) -> CTResult<String> {
+    fn read_line(&mut self, elem: &PerElem) -> CTResult<String> {
         // we know that no line in the database is more than 30 characters long
         let mut buf = Vec::with_capacity(30);
         loop {
             match self.db.read_byte() {
                 Ok(b) if b == b'\n' => break,
                 Ok(b) => buf.push(b),
+                // we let EOF error return without error, so we can check for it further up
+                Err(ref e) if e.kind == EndOfFile => return Err(CTError {
+                    kind: SyntaxError,
+                    desc: format!("Could not find element: {:?}", elem.name),
+                    pos: Some((elem.pos, elem.len)),
+                }),
                 Err(_) => return read_err!()
             }
         }

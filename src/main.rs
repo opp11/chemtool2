@@ -32,7 +32,8 @@ fn main() {
                             .unwrap_or_else(|e| e.exit());
     let mut path = Path::new(&os::args()[0]);
     path.set_filename("elemdb.csv");
-    if let Err(e) = mass::pretty_print_mass(args.arg_formula.as_slice(), &path) {
-        println!("{:?}", e);
+    let input = args.arg_formula.as_slice();
+    if let Err(e) = mass::pretty_print_mass(input, &path) {
+        e.print(input);
     }
 }

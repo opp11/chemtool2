@@ -12,3 +12,28 @@ pub enum CTErrorKind {
 }
 
 pub type CTResult<T> = Result<T, CTError>;
+
+impl CTError {
+    pub fn print(&self, input: &str) {
+        match self.kind {
+            CTErrorKind::SyntaxError => {
+                println!("error: {}", self.desc);
+                if let Some((pos, len)) = self.pos {
+                    println!("error:     {}", input);
+                    print!("error:     ");
+                    for _ in 0..pos {
+                        print!(" ");
+                    }
+                    print!("^");
+                    for _ in 1..len {
+                        print!("~");
+                    }
+                    println!("");
+                }
+            },
+            CTErrorKind::DatabaseError => {
+                println!("fatal error: {}", self.desc);
+            }
+        }
+    }
+}

@@ -13,8 +13,9 @@ mod database;
 mod mass;
 
 const USAGE: &'static str = "
-usage: chemtool <formula>
-       chemtool [-h | --help]
+usage:
+    chemtool <formula>
+    chemtool [-h | --help]
 
 options:
     -h --help    Display this message and then exit.

@@ -3,7 +3,7 @@ use error::CTResult;
 use parser::Parser;
 use database::ElemDatabase;
 
-pub fn pretty_print_mass(formula: &str, db_path: &str) -> CTResult<()> {
+pub fn pretty_print_mass(formula: &str, db_path: &Path) -> CTResult<()> {
     let molecule = try!(Parser::new(formula).parse_molecule());
     let molecule = elem::group_elems(molecule);
     let mut db = try!(ElemDatabase::open(db_path));

@@ -23,11 +23,12 @@ pub struct ElemDatabase {
 }
 
 impl ElemDatabase {
-    pub fn open(path: &str) -> CTResult<ElemDatabase> {
-        match File::open(&Path::new(path)) {
+    pub fn open(path: &Path) -> CTResult<ElemDatabase> {
+        match File::open(path) {
             Ok(db_file) => Ok(ElemDatabase { db: db_file }),
             Err(_) => Err(DatabaseError(CTDatabaseError {
-                desc: format!("Could not open database file. Expected at: {:?}", path)
+                desc: format!("Could not open database file. Expected at: {:?}",
+                              path.as_str().unwrap_or("same directory as the program"))
             })),
         }
     }

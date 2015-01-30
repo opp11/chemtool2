@@ -1,13 +1,15 @@
 use std::old_io::File;
 use std::old_io::SeekStyle::SeekSet;
-use error::{CTResult, CTDatabaseError, CTSyntaxError};
-use error::CTError::{DatabaseError, SyntaxError};
 use elem::{PerElem, Molecule};
+use error::{CTError, CTResult};
+use error::CTErrorKind::{SyntaxError, DatabaseError};
 
 macro_rules! read_err (
-    () => (Err(DatabaseError(CTDatabaseError {
-        desc: "Error reading the database".to_string()
-    })));
+    () => (Err(CTError {
+        kind: DatabaseError,
+        desc: "Error reading the database".to_string(),
+        pos: None
+    }));
 );
 
 #[derive(Show, PartialEq)]
@@ -26,10 +28,12 @@ impl ElemDatabase {
     pub fn open(path: &Path) -> CTResult<ElemDatabase> {
         match File::open(path) {
             Ok(db_file) => Ok(ElemDatabase { db: db_file }),
-            Err(_) => Err(DatabaseError(CTDatabaseError {
+            Err(_) => Err(CTError {
+                kind: DatabaseError,
                 desc: format!("Could not open database file. Expected at: {:?}",
-                              path.as_str().unwrap_or("same directory as the program"))
-            })),
+                              path.as_str().unwrap_or("same directory as the program")),
+                pos: None,
+            }),
         }
     }
 
@@ -43,11 +47,11 @@ impl ElemDatabase {
             if line.starts_with(elem.name.as_slice()) {
                 return decode_line(&line);
             } else if self.db.eof() {
-                return Err(SyntaxError(CTSyntaxError {
+                return Err(CTError {
+                    kind: SyntaxError,
                     desc: format!("Could not find element: {:?}", elem.name),
-                    pos: elem.pos,
-                    len: elem.len,
-                }));
+                    pos: Some((elem.pos, elem.len)),
+                });
             }
         }
     }
@@ -80,9 +84,11 @@ impl ElemDatabase {
 fn decode_line(line: &String) -> CTResult<ElemData> {
     let data: Vec<&str> = line.trim().split(';').collect();
     if data.len() < 4 {
-        Err(DatabaseError(CTDatabaseError {
-            desc: "Missing field in database".to_string()
-        }))
+        Err(CTError {
+            kind: DatabaseError,
+            desc: "Missing field in database".to_string(),
+            pos: None
+        })
     } else {
         let mass = data[1].parse::<f64>();
         let atomic_num = data[3].parse::<u16>();
@@ -94,9 +100,11 @@ fn decode_line(line: &String) -> CTResult<ElemData> {
                 atomic_num: an,
             })
         } else {
-            Err(DatabaseError(CTDatabaseError {
-                desc: "Field in database corrupted".to_string()
-            }))
+            Err(CTError {
+                kind: DatabaseError,
+                desc: "Field in database corrupted".to_string(),
+                pos: None,
+            })
         }
     }
 }
@@ -114,7 +122,7 @@ mod test {
             // if we can't make the database we can't test, so just abort here
             panic!("Could not create dummy database: {:?}", e.desc);
         }
-        ElemDatabase::open(name).unwrap()
+        ElemDatabase::open(&Path::new(name)).unwrap()
     }
 
     fn remove_dummy_db(name: &str) {

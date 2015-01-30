@@ -23,8 +23,8 @@
 
 use std::str::CharRange;
 use elem::{PerElem, Molecule};
-use error::{CTResult, CTSyntaxError};
-use error::CTError::SyntaxError;
+use error::{CTResult, CTError};
+use error::CTErrorKind::SyntaxError;
 
 pub struct Parser {
     pos: usize,
@@ -44,11 +44,11 @@ impl Parser {
         // an error anyway, and will abort the parsing
         if self.pos + 2 >= self.input.len() || self.consume_char() != '-' ||
                                                self.consume_char() != '>' {
-            return Err(SyntaxError(CTSyntaxError {
+            return Err(CTError {
+                kind: SyntaxError,
                 desc: "Missing arrow (->) in chemical reaction".to_string(),
-                pos: self.pos - 2,
-                len: 1,
-            }));
+                pos: Some((self.pos - 2, 1))
+            });
         }
         self.consume_whitespace();
 
@@ -102,22 +102,22 @@ impl Parser {
 
     fn parse_element(&mut self) -> CTResult<Vec<PerElem>> {
         if self.eof() {
-            return Err(SyntaxError(CTSyntaxError {
+            return Err(CTError {
+                kind: SyntaxError,
                 desc: "Found no periodic element".to_string(),
-                pos: self.pos,
-                len: 1,
-            }));
+                pos: Some((self.pos, 1))
+            });
         }
         let start_pos = self.pos;
         let first = self.consume_char();
         if first == '(' {
             let molecule = try!(self.parse_molecule());
             if self.eof() || self.consume_char() != ')' {
-                Err(SyntaxError(CTSyntaxError {
+                Err(CTError {
+                    kind: SyntaxError,
                     desc: "Missing closing parentheses".to_string(),
-                    pos: self.pos - 1,
-                    len: 1,
-                }))
+                    pos: Some((self.pos - 1, 1))
+                })
             } else {
                 Ok(molecule)
             }
@@ -128,11 +128,11 @@ impl Parser {
             let len = name.len();
             Ok(vec!(PerElem { name: name, coef: 1, pos: start_pos, len: len }))
         } else {
-            Err(SyntaxError(CTSyntaxError {
+            Err(CTError {
+                kind: SyntaxError,
                 desc: "Missing uppercase letter at the beginning of the element".to_string(),
-                pos: self.pos - 1,
-                len: 1,
-            }))
+                pos: Some((self.pos - 1, 1))
+            })
         }
     }
 
@@ -142,11 +142,11 @@ impl Parser {
         if let Some(num) = num_str.parse::<u32>() {
             Ok(num)
         } else {
-            Err(SyntaxError(CTSyntaxError {
+            Err(CTError {
+                kind: SyntaxError,
                 desc: "Could not parse coefficient".to_string(),
-                pos: start_pos,
-                len: num_str.len(),
-            }))
+                pos: Some((start_pos, num_str.len()))
+            })
         }
     }
 

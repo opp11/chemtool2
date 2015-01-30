@@ -1,3 +1,4 @@
+#![allow(unused_features)] // so we can still feature(os) when testing
 #![feature(collections, path, io, core, os)]
 extern crate "rustc-serialize" as rustc_serialize;
 extern crate docopt;

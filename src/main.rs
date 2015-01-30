@@ -1,4 +1,4 @@
-#![allow(unstable)]
+#![feature(collections, path, io, core)]
 
 mod elem;
 mod parser;

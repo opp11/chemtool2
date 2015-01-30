@@ -1,5 +1,5 @@
-use std::io::File;
-use std::io::SeekStyle::SeekSet;
+use std::old_io::File;
+use std::old_io::SeekStyle::SeekSet;
 use error::{CTResult, CTDatabaseError, CTSyntaxError};
 use error::CTError::{DatabaseError, SyntaxError};
 use elem::{PerElem, Molecule};
@@ -104,8 +104,8 @@ fn decode_line(line: &String) -> CTResult<ElemData> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::io::File;
-    use std::io::fs;
+    use std::old_io::File;
+    use std::old_io::fs;
     use elem::PerElem;
 
     fn make_dummy_db(name: &str, contents: &str) -> ElemDatabase {

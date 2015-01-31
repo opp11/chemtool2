@@ -23,7 +23,7 @@ options:
     -v --version  Display the version number and then exit.
 ";
 
-const VERSION: &'static str = "0.1.1";
+const VERSION: &'static str = "chemtool 0.1.1";
 
 #[derive(RustcDecodable)]
 struct Args {

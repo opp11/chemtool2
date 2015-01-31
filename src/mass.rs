@@ -12,13 +12,15 @@ pub fn pretty_print_mass(formula: &str, db_path: &Path) -> CTResult<()> {
                          .zip(molecule.iter())
                          .fold(0f64, |t, (ref data, ref elem)| t + data.mass * elem.coef as f64);
 
+    println!("abbrv.     amt.          M             name          Z");
+    println!("------------------------------------------------------");
     for (data, elem) in elem_data.iter().zip(molecule.iter()) {
-        println!("{: <3}  {: >5}    {: >14}    {: ^12}    {: >3}",
+        println!("{: <3}  {: >10}    {: >12}    {: ^12}    {: >3}",
                  data.short_name,
                  elem.coef,
                  // extra format, since println! does not right-align the number
                  // when we specify the precision
-                 format!("{:3.10}", data.mass),
+                 format!("{:3.8}", data.mass),
                  data.long_name,
                  data.atomic_num);
     }

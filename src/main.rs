@@ -14,13 +14,14 @@ mod mass;
 
 const USAGE: &'static str = "
 usage:
-    chemtool <formula>
+    chemtool <formula> [options]
     chemtool [-h | --help]
     chemtool [-v | --version]
 
 options:
-    -h --help     Display this message and then exit.
-    -v --version  Display the version number and then exit.
+    -h --help       Display this message and then exit.
+    -v --version    Display the version number and then exit.
+    --db-path PATH  Explicitly specify the path to the database file.
 ";
 
 const VERSION: &'static str = "chemtool 0.1.1";
@@ -28,6 +29,7 @@ const VERSION: &'static str = "chemtool 0.1.1";
 #[derive(RustcDecodable)]
 struct Args {
     arg_formula: String,
+    flag_db_path: Option<String>,
 }
 
 #[cfg(not(test))]
@@ -39,8 +41,13 @@ fn main() {
                                  .decode()
                             })
                             .unwrap_or_else(|e| e.exit());
-    let mut path = Path::new(&os::args()[0]);
-    path.set_filename("elemdb.csv");
+    let path = if let Some(path) = args.flag_db_path {
+        Path::new(path)
+    } else {
+        let mut path = Path::new(&os::args()[0]);
+        path.set_filename("elemdb.csv");
+        path
+    };
     let input = args.arg_formula.as_slice();
     if let Err(e) = mass::pretty_print_mass(input, &path) {
         e.print(input);

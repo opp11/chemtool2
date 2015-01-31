@@ -44,7 +44,7 @@ impl ElemDatabase {
         self.db.seek(0, SeekSet).ok().expect("Internal error reading database");
 
         loop {
-            // TODO: make so this function returns the 'not found' error
+            // TODO: make it so this function returns the 'not found' error
             let line = try!(self.read_line(elem));
             if line.starts_with(elem.name.as_slice()) {
                 return decode_line(&line);
@@ -70,7 +70,6 @@ impl ElemDatabase {
             match self.db.read_byte() {
                 Ok(b) if b == b'\n' => break,
                 Ok(b) => buf.push(b),
-                // we let EOF error return without error, so we can check for it further up
                 Err(ref e) if e.kind == EndOfFile => return Err(CTError {
                     kind: SyntaxError,
                     desc: format!("Could not find element: {:?}", elem.name),

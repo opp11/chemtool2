@@ -29,11 +29,12 @@ use error::CTErrorKind::SyntaxError;
 pub struct Parser {
     pos: usize,
     input: String,
+    paren_level: u32,
 }
 
 impl Parser {
     pub fn new(input: &str) -> Parser {
-        Parser { pos: 0, input: String::from_str(input) }
+        Parser { pos: 0, input: String::from_str(input), paren_level: 0 }
     }
 
     pub fn parse_reaction(&mut self) -> CTResult<(Vec<Molecule>, Vec<Molecule>)> {
@@ -83,8 +84,15 @@ impl Parser {
             let mut molecule = try!(self.parse_molecule());
             out.append(&mut molecule);
         }
-
-        Ok(out)
+        if !self.eof() && self.peek_char() == ')' && self.paren_level == 0 {
+            Err(CTError {
+                kind: SyntaxError,
+                desc: "Missing opening parentheses".to_string(),
+                pos: Some((self.pos, 1))
+            })
+        } else {
+            Ok(out)
+        }
     }
 
     fn parse_periodic(&mut self) -> CTResult<Vec<PerElem>> {
@@ -111,6 +119,7 @@ impl Parser {
         let start_pos = self.pos;
         let first = self.consume_char();
         if first == '(' {
+            self.paren_level += 1;
             let molecule = try!(self.parse_molecule());
             if self.eof() || self.consume_char() != ')' {
                 Err(CTError {
@@ -119,6 +128,7 @@ impl Parser {
                     pos: Some((self.pos - 1, 1))
                 })
             } else {
+                self.paren_level -= 1;
                 Ok(molecule)
             }
         } else if first.is_uppercase() {

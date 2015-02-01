@@ -280,10 +280,36 @@ mod test {
     }
 
     #[test]
-    fn paren_error() {
+    fn missing_close_paren() {
         let mut parser = Parser::new("(C");
         assert!(parser.parse_molecule().is_err());
         assert!(parser.parse_reaction().is_err());
+    }
+
+    #[test]
+    fn missing_open_paren() {
+        let mut parser = Parser::new("C)");
+        assert!(parser.parse_molecule().is_err());
+        assert!(parser.parse_reaction().is_err());
+    }
+
+    #[test]
+    fn invald_char() {
+        let mut parser = Parser::new("%");
+        assert!(parser.parse_molecule().is_err());
+        assert!(parser.parse_reaction().is_err());
+    }
+
+    #[test]
+    fn is_done() {
+        let mut parser = Parser::new("    ");
+        assert!(parser.is_done());
+    }
+
+    #[test]
+    fn not_done() {
+        let mut parser = Parser::new("    C");
+        assert!(!parser.is_done());
     }
 
     #[test]

@@ -1,10 +1,23 @@
 use elem;
-use error::CTResult;
+use error::{CTResult, CTError};
+use error::CTErrorKind::SyntaxError;
 use parser::Parser;
 use database::ElemDatabase;
 
 pub fn pretty_print_mass(formula: &str, db_path: &Path) -> CTResult<()> {
-    let molecule = try!(Parser::new(formula).parse_molecule());
+    let mut parser = Parser::new(formula);
+    let molecule = try!(parser.parse_molecule());
+    if !parser.is_done() {
+        // since there should be no whitespace in a molecule, the only way for parser to have
+        // returned sucess while not being done, is if there was some whitespace,
+        // followed by more (illegal) input
+        return Err(CTError {
+            kind: SyntaxError,
+            desc: "A molecule must not contain whitespace".to_string(),
+            pos: None,
+        })
+    }
+
     let molecule = elem::group_elems(molecule);
     let mut db = try!(ElemDatabase::open(db_path));
     let elem_data = try!(db.get_data(&molecule));

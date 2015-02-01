@@ -37,6 +37,10 @@ impl Parser {
         Parser { pos: 0, input: String::from_str(input), paren_level: 0 }
     }
 
+    pub fn is_done(&self) -> bool {
+        self.input.chars().skip(self.pos).all(|ch| ch.is_whitespace())
+    }
+
     pub fn parse_reaction(&mut self) -> CTResult<(Vec<Molecule>, Vec<Molecule>)> {
         let lhs = try!(self.parse_side());
         self.consume_whitespace();
@@ -88,6 +92,12 @@ impl Parser {
             Err(CTError {
                 kind: SyntaxError,
                 desc: "Missing opening parentheses".to_string(),
+                pos: Some((self.pos, 1))
+            })
+        } else if !self.eof() && !self.on_legal_char() {
+            Err(CTError {
+                kind: SyntaxError,
+                desc: "Unexpected character".to_string(),
                 pos: Some((self.pos, 1))
             })
         } else {
@@ -184,6 +194,14 @@ impl Parser {
 
     fn eof(&mut self) -> bool {
         self.pos >= self.input.len()
+    }
+
+    fn on_legal_char(&self) -> bool {
+        match self.peek_char() {
+            ch if ch.is_alphanumeric() => true,
+            '+' | '-' | '>' | '(' | ')' | ' ' => true,
+            _ => false,
+        }
     }
 }
 

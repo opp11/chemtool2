@@ -1,5 +1,3 @@
-use std::cmp::Ordering::*;
-
 #[derive(Show, PartialEq)]
 pub struct PerElem {
     pub name: String,

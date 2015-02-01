@@ -24,7 +24,7 @@ options:
     --db-path PATH  Explicitly specify the path to the database file.
 ";
 
-const VERSION: &'static str = "chemtool 0.1.1";
+const VERSION: &'static str = "chemtool 0.2.0";
 
 #[derive(RustcDecodable)]
 struct Args {

@@ -39,16 +39,15 @@ impl ElemDatabase {
     }
 
     pub fn get_single_data(&mut self, elem: &PerElem) -> CTResult<ElemData> {
-        // we return to the beginning of the underlying file, since the data
-        // might lie on a line we have previously read past
-        self.db.seek(0, SeekSet).ok().expect("Internal error reading database");
-
-        loop {
-            // TODO: make it so this function returns the 'not found' error
-            let line = try!(self.read_line(elem));
-            if line.starts_with(elem.name.as_slice()) {
-                return decode_line(&line);
-            }
+        // since the elements should be sorted before we get their data from the database
+        // we should never have to seek back to the beginning of the file
+        if let Ok(data) = self.do_data_search(elem) {
+            Ok(data)
+        } else {
+            // but in case they weren't, we return to the beginning of the underlying file, since
+            // the data might lie on a line we have previously read past
+            self.db.seek(0, SeekSet).ok().expect("Internal error reading database");
+            self.do_data_search(elem)
         }
     }
 
@@ -61,6 +60,16 @@ impl ElemDatabase {
             }
         }
         Ok(out)
+    }
+
+    fn do_data_search(&mut self, elem: &PerElem) -> CTResult<ElemData> {
+        loop {
+            // TODO: make it so this function returns the 'not found' error
+            let line = try!(self.read_line(elem));
+            if line.starts_with(elem.name.as_slice()) {
+                return decode_line(&line);
+            }
+        }
     }
 
     fn read_line(&mut self, elem: &PerElem) -> CTResult<String> {

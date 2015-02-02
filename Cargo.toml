@@ -6,4 +6,5 @@ authors = ["Patrick M Jensen <patmjen@gmail.com>"]
 
 [dependencies]
 docopt = "*"
+docopt_macros = "*"
 rustc-serialize = "*"

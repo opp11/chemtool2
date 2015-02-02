@@ -5,6 +5,4 @@ version = "0.2.0"
 authors = ["Patrick M Jensen <patmjen@gmail.com>"]
 
 [dependencies]
-docopt = "*"
-docopt_macros = "*"
-rustc-serialize = "*"
+getopts = "*"

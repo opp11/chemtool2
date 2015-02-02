@@ -8,6 +8,11 @@ pub struct PerElem {
 
 pub type Molecule = Vec<PerElem>;
 
+/// Sorts the PerElems and groups those with the same name field.
+///
+/// Grouping of two (or more) PerElems means adding the coef field of the
+/// duplicate to the one already found, and then throwing away the duplicate.
+/// E.g. CH3CH3 would turn into C2H6.
 pub fn group_elems(mut molecule: Molecule) -> Molecule {
     let mut out = Vec::<PerElem>::new();
     {

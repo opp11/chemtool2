@@ -4,6 +4,11 @@ use error::CTErrorKind::InputError;
 use parser::Parser;
 use database::ElemDatabase;
 
+/// Takes a checmical formula containing a single molecule, and pretty print the mass
+///
+/// The function will print the molar mass (and some other data) for each element
+/// in the given molecule, as well as the total molar mass. Note, this function
+/// errors if the input is invalid, or it contains more than a single molecule.
 pub fn pretty_print_mass(formula: &str, db_path: &Path) -> CTResult<()> {
     let mut parser = Parser::new(formula);
     let molecule = try!(parser.parse_molecule());

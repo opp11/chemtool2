@@ -26,6 +26,7 @@ pub struct ElemDatabase {
 }
 
 impl ElemDatabase {
+    /// Try to make the database with the file at the given oath
     pub fn open(path: &Path) -> CTResult<ElemDatabase> {
         match File::open(path) {
             Ok(db_file) => Ok(ElemDatabase { db: db_file }),
@@ -38,6 +39,10 @@ impl ElemDatabase {
         }
     }
 
+    /// Try to get the data matching the given PerElem.
+    ///
+    /// This function errors if the PerElem could not be found, or the database
+    /// could not be read.
     pub fn get_single_data(&mut self, elem: &PerElem) -> CTResult<ElemData> {
         // since the elements should be sorted before we get their data from the database
         // we should never have to seek back to the beginning of the file
@@ -51,6 +56,10 @@ impl ElemDatabase {
         }
     }
 
+    /// Try to get the data for all the provided PerElems.
+    ///
+    /// This function errors if one of the PerElem could not be found, or the
+    /// database could not be read.
     pub fn get_data(&mut self, elems: &Molecule) -> CTResult<Vec<ElemData>> {
         let mut out = Vec::new();
         for elem in elems.iter() {

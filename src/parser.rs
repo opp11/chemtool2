@@ -1,4 +1,5 @@
 //! Functions for parsing a molecule or a chemical reaction.
+//!
 //! Mostly based on the HTML parser from the robinson browser engine:
 //! https://github.com/mbrubeck/robinson
 //!
@@ -33,14 +34,23 @@ pub struct Parser {
 }
 
 impl Parser {
+    /// Create a new Parser with the given input string
     pub fn new(input: &str) -> Parser {
         Parser { pos: 0, input: String::from_str(input), paren_level: 0 }
     }
 
+    /// Returns true if there is nothing left to parse
+    ///
+    /// If there is nothing but whitespace left, then we are done with the parsing.
     pub fn is_done(&self) -> bool {
         self.input.chars().skip(self.pos).all(|ch| ch.is_whitespace())
     }
 
+    /// Parses the formula for a chemical reaction
+    ///
+    /// This runs through the full grammar and parses a reaction conforming to it.
+    /// The two sides of the reaction are represented as Vecs of Molecules (which
+    /// are themselves Vecs of PerElems).
     pub fn parse_reaction(&mut self) -> CTResult<(Vec<Molecule>, Vec<Molecule>)> {
         let lhs = try!(self.parse_side());
         self.consume_whitespace();
@@ -62,6 +72,11 @@ impl Parser {
         Ok((lhs, rhs))
     }
 
+    /// Parses a single side in a chemical reaction
+    ///
+    /// This runs through a subset of the grammar in order to parse a single side
+    /// of a checmical reaction. Note that there still be more to parse after a
+    /// call to this function.
     pub fn parse_side(&mut self) -> CTResult<Vec<Molecule>> {
         let mut out = Vec::new();
         let molecule = try!(self.parse_molecule());
@@ -78,6 +93,11 @@ impl Parser {
         Ok(out)
     }
 
+    /// Parses a single molecule
+    ///
+    /// This runs through a subset of the grammar in order to parse a single
+    /// molecule. Note that there still be more to parse after a
+    /// call to this function, and no whitespace is allowed in a molecule.
     pub fn parse_molecule(&mut self) -> CTResult<Molecule> {
         let mut out = Vec::new();
         let mut per = try!(self.parse_periodic());
@@ -126,6 +146,7 @@ impl Parser {
                 pos: Some((self.pos, 1))
             });
         }
+        // we store the current position here, so the consumes don't mess it up
         let start_pos = self.pos;
         let first = self.consume_char();
         if first == '(' {

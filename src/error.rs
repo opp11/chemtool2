@@ -14,6 +14,7 @@ pub enum CTErrorKind {
 pub type CTResult<T> = Result<T, CTError>;
 
 impl CTError {
+    /// Pretty-prints the CTError struct to stdout
     pub fn print(&self, input: &str) {
         match self.kind {
             CTErrorKind::InputError => {

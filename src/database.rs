@@ -3,7 +3,7 @@ use std::old_io::SeekStyle::SeekSet;
 use std::old_io::IoErrorKind::EndOfFile;
 use elem::{PerElem, Molecule};
 use error::{CTError, CTResult};
-use error::CTErrorKind::{SyntaxError, DatabaseError};
+use error::CTErrorKind::{InputError, DatabaseError};
 
 macro_rules! read_err (
     () => (Err(CTError {
@@ -80,7 +80,7 @@ impl ElemDatabase {
                 Ok(b) if b == b'\n' => break,
                 Ok(b) => buf.push(b),
                 Err(ref e) if e.kind == EndOfFile => return Err(CTError {
-                    kind: SyntaxError,
+                    kind: InputError,
                     desc: format!("Could not find element: {:?}", elem.name),
                     pos: Some((elem.pos, elem.len)),
                 }),

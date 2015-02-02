@@ -1,6 +1,6 @@
 use elem;
 use error::{CTResult, CTError};
-use error::CTErrorKind::SyntaxError;
+use error::CTErrorKind::InputError;
 use parser::Parser;
 use database::ElemDatabase;
 
@@ -12,7 +12,7 @@ pub fn pretty_print_mass(formula: &str, db_path: &Path) -> CTResult<()> {
         // returned sucess while not being done, is if there was some whitespace,
         // followed by more (illegal) input
         return Err(CTError {
-            kind: SyntaxError,
+            kind: InputError,
             desc: "A molecule must not contain whitespace".to_string(),
             pos: None,
         })

@@ -7,7 +7,7 @@ pub struct CTError {
 
 #[derive(Show, PartialEq)]
 pub enum CTErrorKind {
-    SyntaxError,
+    InputError,
     DatabaseError,
 }
 
@@ -16,7 +16,7 @@ pub type CTResult<T> = Result<T, CTError>;
 impl CTError {
     pub fn print(&self, input: &str) {
         match self.kind {
-            CTErrorKind::SyntaxError => {
+            CTErrorKind::InputError => {
                 println!("error: {}", self.desc);
                 if let Some((pos, len)) = self.pos {
                     println!("error:     {}", input);

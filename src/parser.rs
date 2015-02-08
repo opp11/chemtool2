@@ -96,7 +96,7 @@ impl Parser {
     /// Parses a single molecule
     ///
     /// This runs through a subset of the grammar in order to parse a single
-    /// molecule. Note that there still be more to parse after a
+    /// molecule. Note that there might still be more to parse after a
     /// call to this function, and no whitespace is allowed in a molecule.
     pub fn parse_molecule(&mut self) -> CTResult<Molecule> {
         let mut out = Vec::new();

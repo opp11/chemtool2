@@ -1,4 +1,4 @@
-#[derive(Show, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct PerElem {
     pub name: String,
     pub coef: u32,

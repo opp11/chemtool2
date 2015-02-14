@@ -13,7 +13,7 @@ macro_rules! read_err (
     }));
 );
 
-#[derive(Show, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct ElemData {
     pub short_name: String,
     pub long_name: String,
@@ -111,7 +111,7 @@ fn decode_line(line: &String) -> CTResult<ElemData> {
     } else {
         let mass = data[1].parse::<f64>();
         let atomic_num = data[3].parse::<u16>();
-        if let (Some(m), Some(an)) = (mass, atomic_num) {
+        if let (Ok(m), Ok(an)) = (mass, atomic_num) {
             Ok(ElemData {
                 short_name: data[0].to_string(),
                 long_name: data[2].to_string(),

@@ -1,11 +1,11 @@
-#[derive(Show, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct CTError {
     pub kind: CTErrorKind,
     pub desc: String,
     pub pos: Option<(usize, usize)>,
 }
 
-#[derive(Show, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum CTErrorKind {
     InputError,
     DatabaseError,

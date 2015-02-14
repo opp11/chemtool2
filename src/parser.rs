@@ -180,7 +180,7 @@ impl Parser {
     fn parse_coefficient(&mut self) -> CTResult<u32> {
         let start_pos = self.pos;
         let num_str = self.consume_while(|ch| ch.is_numeric());
-        if let Some(num) = num_str.parse::<u32>() {
+        if let Ok(num) = num_str.parse::<u32>() {
             Ok(num)
         } else {
             Err(CTError {

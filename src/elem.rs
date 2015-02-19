@@ -15,11 +15,7 @@ pub type Molecule = Vec<PerElem>;
 /// E.g. CH3CH3 would turn into C2H6.
 pub fn group_elems(mut molecule: Molecule) -> Molecule {
     let mut out = Vec::<PerElem>::new();
-    {
-        // we open a scope, so slice borrow stops before the for-loop
-        let mut slice = molecule.as_mut_slice();
-        slice.sort_by(|a, b| a.name.cmp(&b.name));
-    }
+    molecule.as_mut_slice().sort_by(|a, b| a.name.cmp(&b.name));
     // since the elements are now sorted, if the current elem does not match the
     // last element in out (i.e. what we previously pushed), then it won't match
     // anything in out

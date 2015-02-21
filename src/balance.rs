@@ -206,6 +206,7 @@ impl_matrix_index_mut!(RangeTo<usize>, [Vec<f64>]);
 impl_matrix_index_mut!(RangeFrom<usize>, [Vec<f64>]);
 impl_matrix_index_mut!(RangeFull, [Vec<f64>]);
 
+#[cfg(test)]
 mod test {
     use super::*;
     use elem::PerElem;

@@ -34,10 +34,10 @@ pub fn group_elems(mut molecule: Molecule) -> Molecule {
 impl Display for Molecule {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
         for elem in self.iter() {
-            fmt.write_str(elem.name.as_slice());
+            try!(fmt.write_str(elem.name.as_slice()));
             // TODO: Use a proper conversion function -- if it exists
             if elem.coef > 1 {
-                fmt.write_str(format!("{}", elem.coef).as_slice());
+                try!(fmt.write_str(format!("{}", elem.coef).as_slice()));
             }
         }
         Ok(())

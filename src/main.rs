@@ -1,9 +1,9 @@
 #![allow(unused_features)] // so we can still feature(os) when testing
-#![feature(collections, path, io, core, os, plugin)]
+#![feature(collections, path, io, core, os, plugin, env)]
 extern crate getopts;
 
-use getopts::{Options, Matches};
-use std::os;
+use getopts::Options;
+use std::env;
 use parser::Parser;
 
 mod elem;
@@ -24,7 +24,7 @@ const VERSION: &'static str = "chemtool 0.3.0";
 
 #[cfg(not(test))]
 fn main() {
-    let args = os::args();
+    let args: Vec<String> = env::args().collect();
     let mut opts = Options::new();
     opts.optflag("h", "help", "Display this message and then exit.");
     opts.optflag("v", "version", "Display the version number and then exit.");

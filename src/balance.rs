@@ -2,6 +2,7 @@ use std::f64;
 use std::cmp::min;
 use std::num::Float;
 use std::ops::{Index, IndexMut, Range, RangeTo, RangeFrom, RangeFull};
+use elem;
 use elem::Molecule;
 use error::{CTResult, CTError};
 use error::CTErrorKind::InputError;
@@ -123,11 +124,12 @@ struct Matrix {
 impl Matrix {
     fn from_reaction(reaction: &(Vec<Molecule>, Vec<Molecule>)) -> Matrix {
         let &(ref lhs, ref rhs) = reaction;
-        let mut names = Vec::<&str>::new();
+        let mut names = Vec::<String>::new();
         for molecule in lhs.iter().chain(rhs.iter()) {
-            for elem in molecule.iter() {
+            let grouped = elem::group_elems(molecule.clone());
+            for elem in grouped.into_iter() {
                 if names.iter().find(|e| **e == elem.name).is_none() {
-                    names.push(elem.name.as_slice());
+                    names.push(elem.name);
                 }
             }
         }

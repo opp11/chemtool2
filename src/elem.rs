@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter, Error};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct PerElem {
     pub name: String,
     pub coef: u32,

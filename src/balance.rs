@@ -30,9 +30,23 @@ macro_rules! impl_matrix_index_mut {
 
 /// Balances a chemical reaction using Gaussian elimination
 pub fn balance_reaction(reaction: (Vec<Molecule>, Vec<Molecule>)) -> CTResult<Vec<u32>> {
-    let reac_mat = Matrix::from_reaction(reaction);
+    let reac_mat = Matrix::from_reaction(&reaction);
     let reduced_mat = try!(forward_elim(reac_mat));
     let coefs = back_substitute(&reduced_mat);
+
+    // if any of the coefs are 0, then an element in that molecule is missing on the other side
+    // of the reaction
+    if let Some(pos) = coefs.iter().position(|&c| c == 0.0) {
+        let (ref lhs, ref rhs) = reaction;
+        let molecule = lhs.iter().chain(rhs.iter()).nth(pos).unwrap();
+        let begin = molecule.first().unwrap().pos;
+        let end = molecule.last().unwrap().pos + molecule.last().unwrap().len;
+        return Err(CTError {
+            kind: InputError,
+            desc: format!("An element in {} is missing on the other side of the reaction", molecule),
+            pos: Some((begin, end)),
+        })
+    }
 
     // we find the minimum element with fold, since f64 does not implement Ord...
     let min = coefs.iter().fold(f64::INFINITY, |crnt, &num| {
@@ -107,7 +121,8 @@ struct Matrix {
 }
 
 impl Matrix {
-    fn from_reaction((lhs, rhs): (Vec<Molecule>, Vec<Molecule>)) -> Matrix {
+    fn from_reaction(reaction: &(Vec<Molecule>, Vec<Molecule>)) -> Matrix {
+        let &(ref lhs, ref rhs) = reaction;
         let mut names = Vec::<&str>::new();
         for molecule in lhs.iter().chain(rhs.iter()) {
             for elem in molecule.iter() {

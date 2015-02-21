@@ -29,15 +29,15 @@ macro_rules! impl_matrix_index_mut {
 }
 
 /// Balances a chemical reaction using Gaussian elimination
-pub fn balance_reaction(reaction: (Vec<Molecule>, Vec<Molecule>)) -> CTResult<Vec<u32>> {
-    let reac_mat = Matrix::from_reaction(&reaction);
+pub fn balance_reaction(reaction: &(Vec<Molecule>, Vec<Molecule>)) -> CTResult<Vec<u32>> {
+    let reac_mat = Matrix::from_reaction(reaction);
     let reduced_mat = try!(forward_elim(reac_mat));
     let coefs = back_substitute(&reduced_mat);
 
     // if any of the coefs are 0, then an element in that molecule is missing on the other side
     // of the reaction
     if let Some(pos) = coefs.iter().position(|&c| c == 0.0) {
-        let (ref lhs, ref rhs) = reaction;
+        let &(ref lhs, ref rhs) = reaction;
         let molecule = lhs.iter().chain(rhs.iter()).nth(pos).unwrap();
         let begin = molecule.first().unwrap().pos;
         let len = molecule.last().unwrap().pos + molecule.last().unwrap().len - begin;
@@ -211,7 +211,7 @@ mod test {
                              vec!(dummy_elem!("O", 2))),
                         vec!(vec!(dummy_elem!("C", 1), dummy_elem!("O", 2)),
                              vec!(dummy_elem!("H", 2), dummy_elem!("O", 1))));
-        let result = balance_reaction(reaction);
+        let result = balance_reaction(&reaction);
         let expected = Ok(vec!(1, 5, 3, 4));
         assert_eq!(result, expected);
     }
@@ -220,7 +220,7 @@ mod test {
     fn no_balance_needed() {
         let reaction = (vec!(vec!(dummy_elem!("C", 1)), vec!(dummy_elem!("H", 1))),
                         vec!(vec!(dummy_elem!("C", 1)), vec!(dummy_elem!("H", 1))));
-        let result = balance_reaction(reaction);
+        let result = balance_reaction(&reaction);
         let expected = Ok(vec!(1, 1, 1, 1));
         assert_eq!(result, expected);
     }
@@ -229,7 +229,7 @@ mod test {
     fn missing_elem() {
         let reaction = (vec!(vec!(dummy_elem!("C", 1)), vec!(dummy_elem!("H", 1))),
                         vec!(vec!(dummy_elem!("C", 1))));
-        let result = balance_reaction(reaction);
+        let result = balance_reaction(&reaction);
         println!("{:?}", result);
         assert!(result.is_err());
         assert_eq!(result.err().unwrap().kind, InputError);

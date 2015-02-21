@@ -58,7 +58,8 @@ pub fn balance_reaction(reaction: &(Vec<Molecule>, Vec<Molecule>)) -> CTResult<V
         let len = molecule.last().unwrap().pos + molecule.last().unwrap().len - begin;
         return Err(CTError {
             kind: InputError,
-            desc: format!("An element in {} is missing on the other side of the reaction", molecule),
+            desc: format!("An element in {} is missing on the other side of the reaction",
+                          molecule),
             pos: Some((begin, len)),
         })
     }

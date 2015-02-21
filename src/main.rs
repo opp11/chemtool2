@@ -10,6 +10,7 @@ mod parser;
 mod error;
 mod database;
 mod mass;
+mod balance;
 
 const USAGE: &'static str = "\
 Usage:

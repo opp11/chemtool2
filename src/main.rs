@@ -2,8 +2,9 @@
 #![feature(collections, path, io, core, os, plugin)]
 extern crate getopts;
 
-use getopts::Options;
+use getopts::{Options, Matches};
 use std::os;
+use parser::Parser;
 
 mod elem;
 mod parser;
@@ -14,7 +15,8 @@ mod balance;
 
 const USAGE: &'static str = "\
 Usage:
-    chemtool <formula>... [options]
+    chemtool mass <formula> [options]
+    chemtool balance <reaction> [options]
     chemtool [-h | --help]
     chemtool [-v | --version]";
 
@@ -48,13 +50,62 @@ fn main() {
             path
         };
         if given_opts.free.len() > 0 {
-            let input = given_opts.free[0].as_slice();
-            if let Err(e) = mass::pretty_print_mass(input, &path) {
-                e.print(input);
+            let cmd = &given_opts.free[0];
+            let args = given_opts.free.tail();
+            match cmd.as_slice() {
+                "mass" => mass_cmd(&args, &opts, &path),
+                "balance" => balance_cmd(&args, &opts),
+                _ => {
+                    println!("Invalid command");
+                    println!("{}", opts.usage(USAGE));
+                }
             }
         } else {
-            println!("Missing formula to parse.");
+            println!("Missing command.");
             println!("{}", opts.usage(USAGE));
         }
+    }
+}
+
+fn mass_cmd(args: &[String], opts: &Options, db_path: &Path) {
+    if args.len() < 1 {
+        println!("Missing formula.");
+        println!("{}", opts.usage(USAGE));
+    } else if args.len() > 1 {
+        println!("Too many arguments.");
+        println!("{}", opts.usage(USAGE));
+    } else {
+        let formula = args[0].as_slice();
+        if let Err(e) = mass::pretty_print_mass(formula, &db_path) {
+            e.print(formula);
+        }
+    }
+}
+
+fn balance_cmd(args: &[String], opts: &Options) {
+    if args.len() < 1 {
+        println!("Missing reaction.");
+        println!("{}", opts.usage(USAGE));
+    } else if args.len() > 1 {
+        println!("Too many arguments.");
+        println!("{}", opts.usage(USAGE));
+    } else {
+        let input = args[0].as_slice();
+        let mut parser = Parser::new(input);
+        let reaction = match parser.parse_reaction() {
+            Ok(r) => r,
+            Err(e) => {
+                e.print(input);
+                return;
+            }
+        };
+        let coefs = match balance::balance_reaction(&reaction) {
+            Ok(c) => c,
+            Err(e) => {
+                e.print(input);
+                return;
+            }
+        };
+        balance::pretty_print_balanced(&reaction, &coefs);
     }
 }

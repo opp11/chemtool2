@@ -323,13 +323,13 @@ mod test {
 
     #[test]
     fn is_done() {
-        let mut parser = Parser::new("    ");
+        let parser = Parser::new("    ");
         assert!(parser.is_done());
     }
 
     #[test]
     fn not_done() {
-        let mut parser = Parser::new("    C");
+        let parser = Parser::new("    C");
         assert!(!parser.is_done());
     }
 

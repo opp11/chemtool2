@@ -29,6 +29,20 @@ macro_rules! impl_matrix_index_mut {
     }
 }
 
+pub fn pretty_print_balanced(reaction: &(Vec<Molecule>, Vec<Molecule>), coefs: &Vec<u32>) {
+    let &(ref lhs, ref rhs) = reaction;
+    print!("{} {}", coefs[0], lhs[0]);
+    for (coef, molecule) in coefs.iter().zip(lhs.iter()).skip(1) {
+        print!(" + {} {}", coef, molecule);
+    }
+    print!(" -> ");
+    print!("{} {}", coefs[lhs.len()], rhs[0]);
+    for (coef, molecule) in coefs.iter().skip(lhs.len()).zip(rhs.iter()).skip(1) {
+        print!(" + {} {}", coef, molecule);
+    }
+    println!("");
+}
+
 /// Balances a chemical reaction using Gaussian elimination
 pub fn balance_reaction(reaction: &(Vec<Molecule>, Vec<Molecule>)) -> CTResult<Vec<u32>> {
     let reac_mat = Matrix::from_reaction(reaction);

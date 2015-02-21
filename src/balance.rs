@@ -178,6 +178,7 @@ impl_matrix_index_mut!(RangeFull, [Vec<f64>]);
 mod test {
     use super::*;
     use elem::PerElem;
+    use error::CTErrorKind::InputError;
 
     macro_rules! dummy_elem(
         ($name:expr) => (
@@ -198,5 +199,24 @@ mod test {
         let result = balance_reaction(reaction);
         let expected = Ok(vec!(1, 5, 3, 4));
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn no_balance_needed() {
+        let reaction = (vec!(vec!(dummy_elem!("C", 1)), vec!(dummy_elem!("H", 1))),
+                        vec!(vec!(dummy_elem!("C", 1)), vec!(dummy_elem!("H", 1))));
+        let result = balance_reaction(reaction);
+        let expected = Ok(vec!(1, 1, 1, 1));
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn missing_elem() {
+        let reaction = (vec!(vec!(dummy_elem!("C", 1)), vec!(dummy_elem!("H", 1))),
+                        vec!(vec!(dummy_elem!("C", 1))));
+        let result = balance_reaction(reaction);
+        println!("{:?}", result);
+        assert!(result.is_err());
+        assert_eq!(result.err().unwrap().kind, InputError);
     }
 }

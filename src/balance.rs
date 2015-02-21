@@ -139,12 +139,13 @@ struct Matrix {
 impl Matrix {
     fn from_reaction(reaction: &(Vec<Molecule>, Vec<Molecule>)) -> Matrix {
         let &(ref lhs, ref rhs) = reaction;
-        let mut names = Vec::<String>::new();
+        let lhs: Vec<Molecule> = lhs.clone().into_iter().map(|m| elem::group_elems(m)).collect();
+        let rhs: Vec<Molecule> = rhs.clone().into_iter().map(|m| elem::group_elems(m)).collect();
+        let mut names = Vec::<&str>::new();
         for molecule in lhs.iter().chain(rhs.iter()) {
-            let grouped = elem::group_elems(molecule.clone());
-            for elem in grouped.into_iter() {
+            for elem in molecule.iter() {
                 if names.iter().find(|e| **e == elem.name).is_none() {
-                    names.push(elem.name);
+                    names.push(elem.name.as_slice());
                 }
             }
         }
@@ -226,6 +227,18 @@ mod test {
     fn balance() {
         // attempt to balance C3H8 + O2 -> CO2 + H2O
         let reaction = (vec!(vec!(dummy_elem!("C", 3), dummy_elem!("H", 8)),
+                             vec!(dummy_elem!("O", 2))),
+                        vec!(vec!(dummy_elem!("C", 1), dummy_elem!("O", 2)),
+                             vec!(dummy_elem!("H", 2), dummy_elem!("O", 1))));
+        let result = balance_reaction(&reaction);
+        let expected = Ok(vec!(1, 5, 3, 4));
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn balance_non_grouped() {
+        let reaction = (vec!(vec!(dummy_elem!("C"), dummy_elem!("H", 3), dummy_elem!("C"),
+                                  dummy_elem!("H", 2), dummy_elem!("C"), dummy_elem!("H", 3)),
                              vec!(dummy_elem!("O", 2))),
                         vec!(vec!(dummy_elem!("C", 1), dummy_elem!("O", 2)),
                              vec!(dummy_elem!("H", 2), dummy_elem!("O", 1))));

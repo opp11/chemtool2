@@ -71,4 +71,12 @@ mod test {
         let expected = "C2H3";
         assert_eq!(result, expected);
     }
+
+    #[test]
+    fn molecule_display_coefs() {
+       let molecule = vec!(dummy_elem!("C", 1), dummy_elem!("H", 3));
+        let result = format!("{}", molecule);
+        let expected = "CH3";
+        assert_eq!(result, expected);
+    }
 }

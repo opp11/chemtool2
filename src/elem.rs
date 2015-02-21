@@ -1,3 +1,5 @@
+use std::fmt::{Display, Formatter, Error};
+
 #[derive(Debug, PartialEq)]
 pub struct PerElem {
     pub name: String,
@@ -29,6 +31,17 @@ pub fn group_elems(mut molecule: Molecule) -> Molecule {
     out
 }
 
+impl Display for Molecule {
+    fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
+        for elem in self.iter() {
+            fmt.write_str(elem.name.as_slice());
+            // TODO: Use a proper conversion function -- if it exists
+            fmt.write_str(format!("{}", elem.coef).as_slice());
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -46,6 +59,14 @@ mod test {
     fn group() {
         let result = group_elems(vec!(dummy_elem!("C"), dummy_elem!("H"), dummy_elem!("C")));
         let expected = vec!(dummy_elem!("C", 2), dummy_elem!("H", 1));
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn molecule_display() {
+        let molecule = vec!(dummy_elem!("C", 2), dummy_elem!("H", 3));
+        let result = format!("{}", molecule);
+        let expected = "C2H3";
         assert_eq!(result, expected);
     }
 }

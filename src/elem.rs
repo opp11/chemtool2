@@ -36,7 +36,9 @@ impl Display for Molecule {
         for elem in self.iter() {
             fmt.write_str(elem.name.as_slice());
             // TODO: Use a proper conversion function -- if it exists
-            fmt.write_str(format!("{}", elem.coef).as_slice());
+            if elem.coef > 1 {
+                fmt.write_str(format!("{}", elem.coef).as_slice());
+            }
         }
         Ok(())
     }

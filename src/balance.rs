@@ -40,11 +40,11 @@ pub fn balance_reaction(reaction: (Vec<Molecule>, Vec<Molecule>)) -> CTResult<Ve
         let (ref lhs, ref rhs) = reaction;
         let molecule = lhs.iter().chain(rhs.iter()).nth(pos).unwrap();
         let begin = molecule.first().unwrap().pos;
-        let end = molecule.last().unwrap().pos + molecule.last().unwrap().len;
+        let len = molecule.last().unwrap().pos + molecule.last().unwrap().len - begin;
         return Err(CTError {
             kind: InputError,
             desc: format!("An element in {} is missing on the other side of the reaction", molecule),
-            pos: Some((begin, end)),
+            pos: Some((begin, len)),
         })
     }
 

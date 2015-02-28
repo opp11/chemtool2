@@ -15,7 +15,7 @@ pub type CTResult<T> = Result<T, CTError>;
 
 impl CTError {
     /// Pretty-prints the CTError struct to stdout
-    pub fn print(&self, input: &str) {
+    pub fn print(&self, extra_desc: Option<&String>) {
         match self.kind {
             CTErrorKind::InputError => {
                 println!("{}", self.desc);

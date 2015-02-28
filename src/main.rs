@@ -5,6 +5,9 @@ extern crate getopts;
 use getopts::Options;
 use std::env;
 use parser::Parser;
+use database::ElemDatabase;
+use error::{CTResult, CTError};
+use error::CTErrorKind::InputError;
 
 mod elem;
 mod parser;
@@ -52,13 +55,17 @@ fn main() {
         if given_opts.free.len() > 0 {
             let cmd = &given_opts.free[0];
             let args = given_opts.free.tail();
-            match cmd.as_slice() {
+            let cmd_result = match cmd.as_slice() {
                 "mass" => mass_cmd(&args, &opts, &path),
                 "balance" => balance_cmd(&args, &opts),
                 _ => {
                     println!("Invalid command");
                     println!("{}", opts.usage(USAGE));
+                    Ok(())
                 }
+            };
+            if let Err(e) = cmd_result {
+                e.print(args.first());
             }
         } else {
             println!("Missing command.");
@@ -67,7 +74,7 @@ fn main() {
     }
 }
 
-fn mass_cmd(args: &[String], opts: &Options, db_path: &Path) {
+fn mass_cmd(args: &[String], opts: &Options, db_path: &Path) -> CTResult<()> {
     if args.len() < 1 {
         println!("Missing formula.");
         println!("{}", opts.usage(USAGE));
@@ -75,14 +82,29 @@ fn mass_cmd(args: &[String], opts: &Options, db_path: &Path) {
         println!("Too many arguments.");
         println!("{}", opts.usage(USAGE));
     } else {
-        let formula = args[0].as_slice();
-        if let Err(e) = mass::pretty_print_mass(formula, &db_path) {
-            e.print(formula);
+        let input = args[0].as_slice();
+        let mut parser = Parser::new(input);
+        let molecule = try!(parser.parse_molecule());
+        if !parser.is_done() {
+            // since there should be no whitespace in a molecule, the only way for parser to have
+            // returned sucess while not being done, is if there was some whitespace,
+            // followed by more (illegal) input
+            return Err(CTError {
+                kind: InputError,
+                desc: "A molecule must not contain whitespace".to_string(),
+                pos: None,
+            })
         }
-    }
+
+        let molecule = elem::group_elems(molecule);
+        let mut database = try!(ElemDatabase::open(db_path));
+        let data = try!(database.get_data(&molecule));
+        mass::pretty_print_data(&data, &molecule);
+    };
+    Ok(())
 }
 
-fn balance_cmd(args: &[String], opts: &Options) {
+fn balance_cmd(args: &[String], opts: &Options) -> CTResult<()> {
     if args.len() < 1 {
         println!("Missing reaction.");
         println!("{}", opts.usage(USAGE));
@@ -92,20 +114,9 @@ fn balance_cmd(args: &[String], opts: &Options) {
     } else {
         let input = args[0].as_slice();
         let mut parser = Parser::new(input);
-        let reaction = match parser.parse_reaction() {
-            Ok(r) => r,
-            Err(e) => {
-                e.print(input);
-                return;
-            }
-        };
-        let coefs = match balance::balance_reaction(&reaction) {
-            Ok(c) => c,
-            Err(e) => {
-                e.print(input);
-                return;
-            }
-        };
+        let reaction = try!(parser.parse_reaction());
+        let coefs = try!(balance::balance_reaction(&reaction));
         balance::pretty_print_balanced(&reaction, &coefs);
-    }
+    };
+    Ok(())
 }

@@ -1,31 +1,11 @@
-use elem;
-use error::{CTResult, CTError};
-use error::CTErrorKind::InputError;
-use parser::Parser;
-use database::ElemDatabase;
+use elem::Molecule;
+use database::ElemData;
 
-/// Takes a checmical formula containing a single molecule, and pretty print the mass
+/// Takes a parsed checmical formula containing a single molecule, and pretty print the mass
 ///
 /// The function will print the molar mass (and some other data) for each element
-/// in the given molecule, as well as the total molar mass. Note, this function
-/// errors if the input is invalid, or it contains more than a single molecule.
-pub fn pretty_print_mass(formula: &str, db_path: &Path) -> CTResult<()> {
-    let mut parser = Parser::new(formula);
-    let molecule = try!(parser.parse_molecule());
-    if !parser.is_done() {
-        // since there should be no whitespace in a molecule, the only way for parser to have
-        // returned sucess while not being done, is if there was some whitespace,
-        // followed by more (illegal) input
-        return Err(CTError {
-            kind: InputError,
-            desc: "A molecule must not contain whitespace".to_string(),
-            pos: None,
-        })
-    }
-
-    let molecule = elem::group_elems(molecule);
-    let mut db = try!(ElemDatabase::open(db_path));
-    let elem_data = try!(db.get_data(&molecule));
+/// in the given molecule, as well as the total molar mass.
+pub fn pretty_print_data(elem_data: &Vec<ElemData>, molecule: &Molecule) {
     let total = elem_data.iter()
                          .zip(molecule.iter())
                          .fold(0f64, |t, (ref data, ref elem)| t + data.mass * elem.coef as f64);
@@ -43,5 +23,4 @@ pub fn pretty_print_mass(formula: &str, db_path: &Path) -> CTResult<()> {
                  data.atomic_num);
     }
     println!("Total: {}", total);
-    Ok(())
 }

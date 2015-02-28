@@ -76,8 +76,9 @@ fn main() {
         };
 
         match cmd_result {
-            Err(ref e) if e.kind == InputError => e.print(args.first()),
+            Err(ref e) if e.kind == InputError => e.print(Some(&args[2])),
             Err(ref e) if e.kind == UsageError => e.print(Some(&opts.usage(USAGE))),
+            Err(ref e) => e.print(None),
             _ => ()
         }
     }

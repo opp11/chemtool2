@@ -29,6 +29,10 @@ macro_rules! impl_matrix_index_mut {
     }
 }
 
+/// Takes a parsed reaction and pretty prints it to the console
+///
+/// The reaction is printed as follows:
+/// <coef> <molecule> + <coef> <molecule> + ... -> <coef> <molecule> + <coef> <molecule> + ...
 pub fn pretty_print_balanced(reaction: &(Vec<Molecule>, Vec<Molecule>), coefs: &Vec<u32>) {
     let &(ref lhs, ref rhs) = reaction;
     print!("{} {}", coefs[0], lhs[0]);
@@ -43,7 +47,17 @@ pub fn pretty_print_balanced(reaction: &(Vec<Molecule>, Vec<Molecule>), coefs: &
     println!("");
 }
 
-/// Balances a chemical reaction using Gaussian elimination
+/// Balances a chemical reaction using Gaussian elimination and returns the coefficients
+///
+/// The balancer finds the coefficients needed to balance the reaction by treating the reaction as
+/// a system of linear equations and then solving the system with Gaussian elimination.
+/// The transformation to an equation system (represented as a matrix `R`) is as follows:
+/// * Each column corresponds to a molecule
+/// * Each row corresponds to a periodic element.
+/// * The number at `R[i,j]` is the amount of periocic element `i` in molecule `j`.
+/// * Numbers from molecules on the right hand side of the equation will be negative.
+/// Thus we can now solve the system to find a linear combination of the columns which will result
+/// in a zero-vector, and then read the coefficients from the solution.
 pub fn balance_reaction(reaction: &(Vec<Molecule>, Vec<Molecule>)) -> CTResult<Vec<u32>> {
     let reac_mat = Matrix::from_reaction(reaction);
     let reduced_mat = try!(forward_elim(reac_mat));
@@ -142,6 +156,7 @@ impl Matrix {
         let lhs: Vec<Molecule> = lhs.clone().into_iter().map(|m| elem::group_elems(m)).collect();
         let rhs: Vec<Molecule> = rhs.clone().into_iter().map(|m| elem::group_elems(m)).collect();
         let mut names = Vec::<&str>::new();
+        // gather up all the element names in the reaction so we now how many rows will be needed
         for molecule in lhs.iter().chain(rhs.iter()) {
             for elem in molecule.iter() {
                 if names.iter().find(|e| **e == elem.name).is_none() {

@@ -9,6 +9,7 @@ pub struct CTError {
 pub enum CTErrorKind {
     InputError,
     DatabaseError,
+    UsageError,
 }
 
 pub type CTResult<T> = Result<T, CTError>;
@@ -16,9 +17,10 @@ pub type CTResult<T> = Result<T, CTError>;
 impl CTError {
     /// Pretty-prints the CTError struct to stdout
     pub fn print(&self, extra_desc: Option<&String>) {
+        println!("{}", self.desc);
+        // some errors will have extra stuff to report to make the message clearer for the user
         match self.kind {
             CTErrorKind::InputError => {
-                println!("{}", self.desc);
                 if let (Some((pos, len)), Some(input)) = (self.pos, extra_desc) {
                     println!("    {}", input);
                     print!("    ");
@@ -32,9 +34,7 @@ impl CTError {
                     println!("");
                 }
             },
-            CTErrorKind::DatabaseError => {
-                println!("{}", self.desc);
-            }
+            _ => (),
         }
     }
 }

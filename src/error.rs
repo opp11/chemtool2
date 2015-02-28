@@ -18,10 +18,10 @@ impl CTError {
     pub fn print(&self, input: &str) {
         match self.kind {
             CTErrorKind::InputError => {
-                println!("error: {}", self.desc);
-                if let Some((pos, len)) = self.pos {
-                    println!("error:     {}", input);
-                    print!("error:     ");
+                println!("{}", self.desc);
+                if let (Some((pos, len)), Some(input)) = (self.pos, extra_desc) {
+                    println!("    {}", input);
+                    print!("    ");
                     for _ in 0..pos {
                         print!(" ");
                     }
@@ -33,7 +33,7 @@ impl CTError {
                 }
             },
             CTErrorKind::DatabaseError => {
-                println!("fatal error: {}", self.desc);
+                println!("{}", self.desc);
             }
         }
     }

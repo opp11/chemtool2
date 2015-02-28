@@ -23,7 +23,7 @@ Usage:
     chemtool [-h | --help]
     chemtool [-v | --version]";
 
-const VERSION: &'static str = "chemtool 0.3.1";
+const VERSION: &'static str = "chemtool 0.4.0";
 
 #[cfg(not(test))]
 fn main() {

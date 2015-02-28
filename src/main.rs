@@ -7,7 +7,7 @@ use std::env;
 use parser::Parser;
 use database::ElemDatabase;
 use error::{CTResult, CTError};
-use error::CTErrorKind::InputError;
+use error::CTErrorKind::{InputError, UsageError};
 
 mod elem;
 mod parser;
@@ -52,35 +52,50 @@ fn main() {
             path.set_filename("elemdb.csv");
             path
         };
-        if given_opts.free.len() > 0 {
+
+        let cmd_result = if given_opts.free.len() > 0 {
             let cmd = &given_opts.free[0];
             let args = given_opts.free.tail();
-            let cmd_result = match cmd.as_slice() {
-                "mass" => mass_cmd(&args, &opts, &path),
-                "balance" => balance_cmd(&args, &opts),
+            match cmd.as_slice() {
+                "mass" => mass_cmd(&args, &path),
+                "balance" => balance_cmd(&args),
                 _ => {
-                    println!("Invalid command");
-                    println!("{}", opts.usage(USAGE));
-                    Ok(())
+                    Err(CTError {
+                        kind: UsageError,
+                        desc: "Invalid command".to_string(),
+                        pos: None,
+                    })
                 }
-            };
-            if let Err(e) = cmd_result {
-                e.print(args.first());
             }
         } else {
-            println!("Missing command.");
-            println!("{}", opts.usage(USAGE));
+            Err(CTError {
+                kind: UsageError,
+                desc: "Missing command.".to_string(),
+                pos: None,
+            })
+        };
+
+        match cmd_result {
+            Err(ref e) if e.kind == InputError => e.print(args.first()),
+            Err(ref e) if e.kind == UsageError => e.print(Some(&opts.usage(USAGE))),
+            _ => ()
         }
     }
 }
 
-fn mass_cmd(args: &[String], opts: &Options, db_path: &Path) -> CTResult<()> {
+fn mass_cmd(args: &[String], db_path: &Path) -> CTResult<()> {
     if args.len() < 1 {
-        println!("Missing formula.");
-        println!("{}", opts.usage(USAGE));
+        Err(CTError {
+            kind: UsageError,
+            desc: "Missing formula.".to_string(),
+            pos: None,
+        })
     } else if args.len() > 1 {
-        println!("Too many arguments.");
-        println!("{}", opts.usage(USAGE));
+        Err(CTError {
+            kind: UsageError,
+            desc: "Too many arguments.".to_string(),
+            pos: None,
+        })
     } else {
         let input = args[0].as_slice();
         let mut parser = Parser::new(input);
@@ -100,23 +115,29 @@ fn mass_cmd(args: &[String], opts: &Options, db_path: &Path) -> CTResult<()> {
         let mut database = try!(ElemDatabase::open(db_path));
         let data = try!(database.get_data(&molecule));
         mass::pretty_print_data(&data, &molecule);
-    };
-    Ok(())
+        Ok(())
+    }
 }
 
-fn balance_cmd(args: &[String], opts: &Options) -> CTResult<()> {
+fn balance_cmd(args: &[String]) -> CTResult<()> {
     if args.len() < 1 {
-        println!("Missing reaction.");
-        println!("{}", opts.usage(USAGE));
+        Err(CTError {
+            kind: UsageError,
+            desc: "Missing reaction.".to_string(),
+            pos: None,
+        })
     } else if args.len() > 1 {
-        println!("Too many arguments.");
-        println!("{}", opts.usage(USAGE));
+        Err(CTError {
+            kind: UsageError,
+            desc: "Too many arguments.".to_string(),
+            pos: None,
+        })
     } else {
         let input = args[0].as_slice();
         let mut parser = Parser::new(input);
         let reaction = try!(parser.parse_reaction());
         let coefs = try!(balance::balance_reaction(&reaction));
         balance::pretty_print_balanced(&reaction, &coefs);
-    };
-    Ok(())
+        Ok(())
+    }
 }

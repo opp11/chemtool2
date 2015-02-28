@@ -34,6 +34,11 @@ impl CTError {
                     println!("");
                 }
             },
+            CTErrorKind::UsageError => {
+                if let Some(usage) = extra_desc {
+                    println!("{}", usage);
+                }
+            }
             _ => (),
         }
     }

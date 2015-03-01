@@ -1,5 +1,5 @@
 #![allow(unused_features)] // so we can still feature(os) when testing
-#![feature(collections, path, io, core, os, plugin, env)]
+#![feature(collections, path, old_io, old_path, core, os, plugin)]
 extern crate getopts;
 
 use getopts::Options;
